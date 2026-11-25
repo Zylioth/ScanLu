@@ -27,6 +27,29 @@ try {
   await page.getByLabel('Passcode').fill('1234')
   await page.getByRole('button', { name: 'Sign in' }).click()
   await page.waitForURL('**/admin', { timeout: 10000 })
+
+  // Audio is the whole point of the ready alert, so prove it unlocks on a tap.
+  const enableSound = page.getByRole('button', { name: 'Tap to enable sound' })
+  const hadEnableButton = await enableSound
+    .first()
+    .waitFor({ timeout: 5000 })
+    .then(() => true)
+    .catch(() => false)
+  if (hadEnableButton) {
+    await enableSound.first().click()
+    await page.waitForTimeout(500)
+    const unlocked = await page
+      .getByRole('button', { name: 'Sound on' })
+      .first()
+      .waitFor({ timeout: 3000 })
+      .then(() => true)
+      .catch(() => false)
+    if (!unlocked) problems.push('audio did not unlock after tapping enable sound')
+    log(`audio unlocked: ${unlocked}`)
+  } else {
+    problems.push('enable-sound button never appeared on a fresh admin session')
+  }
+
   await page.getByRole('button', { name: 'Switch to dark theme' }).click()
   await page.waitForTimeout(600)
   await page.screenshot({ path: `${OUT}/12-board-dark.png` })
