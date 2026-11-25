@@ -8,6 +8,9 @@ import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
 
 const BASE = process.env.SMOKE_BASE ?? 'http://localhost:5173'
+// GitHub Pages answers deep links with 404.html, so the document itself reports
+// 404 even though the app boots. Everything else must still be clean.
+const pagesMode = process.env.SMOKE_PAGES === '1'
 const OUT = 'screenshots'
 mkdirSync(OUT, { recursive: true })
 
@@ -38,7 +41,10 @@ const context = await browser.newContext({
 const page = await context.newPage()
 
 page.on('console', (message) => {
-  if (message.type() === 'error') problems.push(`console: ${message.text()}`)
+  if (message.type() !== 'error') return
+  const text = message.text()
+  if (pagesMode && /status of 404/.test(text)) return
+  problems.push(`console: ${text}`)
 })
 page.on('pageerror', (error) => problems.push(`pageerror: ${error.message}`))
 

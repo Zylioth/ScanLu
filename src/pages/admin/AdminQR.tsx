@@ -25,8 +25,16 @@ export function AdminQR() {
   const svgRef = useRef<string | null>(null)
 
   const targetUrl = useMemo(() => {
-    const base = (import.meta.env.VITE_PUBLIC_APP_URL as string | undefined) || window.location.origin
-    return `${base.replace(/\/$/, '')}/menu`
+    // VITE_PUBLIC_APP_URL wins (set in CI), otherwise derive from where the app
+    // is actually served, including a subpath such as /ScanLu/ on Pages.
+    //
+    // Point at the site root, not /menu: on GitHub Pages any deep link returns
+    // 404.html (with the app inside), and a scanned QR should be a clean 200.
+    // The '/' route redirects to /menu by itself.
+    const configured = import.meta.env.VITE_PUBLIC_APP_URL as string | undefined
+    const origin = `${window.location.origin}${import.meta.env.BASE_URL}`
+    const base = (configured && configured.trim().length > 0 ? configured : origin).replace(/\/$/, '')
+    return base
   }, [])
 
   useEffect(() => {

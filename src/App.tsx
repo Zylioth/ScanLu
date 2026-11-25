@@ -45,8 +45,12 @@ function NotFound() {
 }
 
 export default function App() {
+  // BASE_URL is '/' locally and '/ScanLu/' on GitHub Pages, so the router has
+  // to match routes below that prefix instead of from the domain root.
+  const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/'
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <ToastProvider position="bottom">
         <ScrollToTop />
         <Suspense fallback={<PageFallback />}>

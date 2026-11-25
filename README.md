@@ -94,6 +94,34 @@ Admin sign-in in Supabase mode uses email plus password from
 
 ---
 
+## Hosting on GitHub Pages
+
+The repo already contains the whole pipeline: `.github/workflows/deploy.yml`
+builds and publishes on every push to `main`.
+
+- Live URL: **https://zylioth.github.io/ScanLu/**
+- `npm run build:pages` builds with `--base=/ScanLu/` (Pages serves from a
+  subpath, not the domain root) and copies `dist/index.html` to `dist/404.html`,
+  because Pages has no rewrite rules and a deep link needs the app shell back.
+- `VITE_PUBLIC_APP_URL` is set in the workflow so the QR code and the print card
+  point at the deployed site. The QR targets the site root, which redirects to
+  the menu, so a scan lands on a clean 200 rather than a 404.
+- First deploy only: if the run fails on `configure-pages`, set
+  Settings, Pages, Source to **GitHub Actions** and re-run the job.
+- Custom domain later: add a `CNAME` file and the DNS record, then change
+  `VITE_PUBLIC_APP_URL` in the workflow to match.
+
+To test the subpath build exactly as Pages serves it before pushing:
+
+```bash
+npm run build:pages
+node scripts/serve-pages.mjs 4174
+SMOKE_BASE=http://localhost:4174/ScanLu SMOKE_PAGES=1 node scripts/smoke.mjs
+```
+
+Pages is static only, so this hosts the app in demo mode until Supabase is
+connected. The SQL and the client for that are already in `supabase/`.
+
 ## Scripts
 
 | Command | What it does |
@@ -103,6 +131,8 @@ Admin sign-in in Supabase mode uses email plus password from
 | `npm run typecheck` | TypeScript only |
 | `npm run lint` | oxlint |
 | `npm run icons` | Regenerate PWA icons from the script |
+| `npm run build:pages` | Build for the `/ScanLu/` subpath, with the `404.html` fallback |
+| `node scripts/serve-pages.mjs` | Serve `dist` the way GitHub Pages does, for local checks |
 | `node scripts/smoke.mjs` | Real Chrome click-through of the guest and admin flows, writes `screenshots/` |
 | `node scripts/realtime.mjs` | Two tabs, one browser: proves orders, status changes and collection sync with no reload |
 | `node scripts/checks.mjs` | Dark theme, Bahasa Melayu, 320px phone, keyboard focus, pause toggle, A5 and A4 print sizing |

@@ -46,6 +46,15 @@ as "about N min", never as a promise.
 
 ## Product
 
+**Hosting is GitHub Pages, not Cloudflare Pages.** `system.md` suggested
+Cloudflare, but this app is a static bundle with Supabase behind it, so any
+static host works and Pages keeps code and hosting in one place. Two things had
+to change for a subdirectory deploy: `BrowserRouter` takes its `basename` from
+Vite's `BASE_URL` (without it, `/ScanLu/menu` matched no route), and the QR
+targets the site root instead of `/ScanLu/menu`, because Pages answers every
+deep link with `404.html` and a scanned code should land on a 200. The
+`404.html` copy keeps deep links working on refresh.
+
 **The app is called ScanLu; the event is data.** `APP_NAME` in `src/lib/brand.ts`
 is the product (browser title, manifest, admin sign-in). The name on the guest
 header, the ticket and the printed QR card comes from `events.event_name`, which

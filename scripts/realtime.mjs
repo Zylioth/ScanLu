@@ -10,6 +10,8 @@ import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
 
 const BASE = process.env.SMOKE_BASE ?? 'http://localhost:5173'
+// Deep links return 404.html on GitHub Pages; the document 404 is expected there.
+const pagesMode = process.env.SMOKE_PAGES === '1'
 const OUT = 'screenshots'
 mkdirSync(OUT, { recursive: true })
 
@@ -26,7 +28,10 @@ for (const [name, page] of [
   ['admin', admin],
 ]) {
   page.on('console', (message) => {
-    if (message.type() === 'error') problems.push(`${name} console: ${message.text()}`)
+    if (message.type() !== 'error') return
+    const text = message.text()
+    if (pagesMode && /status of 404/.test(text)) return
+    problems.push(`${name} console: ${text}`)
   })
   page.on('pageerror', (error) => problems.push(`${name} pageerror: ${error.message}`))
 }
