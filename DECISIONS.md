@@ -63,6 +63,13 @@ stock appeared from nowhere, and stock levels are the one number a host has to b
 able to trust after a busy night. Deleting an ingredient relies on the foreign
 keys: recipe lines cascade away, and options that used it are set to null.
 
+**The numbers screen reads orders, it does not query a summary table.** Every
+figure on `/admin/stats` is computed in the browser from `listOrders()`, which the
+admin board already loads. No counters, no rollup table, nothing that can drift
+from the orders themselves, and no backend or SQL change. It only counts real
+orders, never estimates, and money is hidden entirely in free mode rather than
+showing a meaningless zero.
+
 **One realtime channel is shared by every query hook.** `realtime-js` returns the
 existing channel when the topic matches, so the second `useQuery` to subscribe was
 thrown by `.on()` ("cannot add postgres_changes callbacks after subscribe()") and

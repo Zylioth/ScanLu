@@ -156,6 +156,7 @@
     "settings": "Tetapan",
     "modifiers": "Pilihan",
     "ingredients": "Bahan",
+    "stats": "Angka",
     "noAccess": "Masuk untuk teruskan"
   },
   "settingsPanel": {
@@ -259,6 +260,24 @@
     "unitG": "gram",
     "unitMl": "mililiter",
     "unitPcs": "biji"
+  },
+  "stats": {
+    "hint": "Hanya pesanan sebenar dikira. Hari ini bermaksud hari ini waktu Brunei.",
+    "empty": "Belum ada pesanan hari ini. Nombor akan muncul selepas yang pertama.",
+    "orders": "Pesanan",
+    "cups": "Minuman",
+    "taken": "Diterima",
+    "cancelled": "Dibatalkan",
+    "topDrinks": "Apa yang ditempah orang",
+    "cupsCount_one": "{{count}} minuman",
+    "cupsCount_other": "{{count}} minuman",
+    "byHour": "Bila pesanan masuk",
+    "byHourHint": "Minuman setiap jam, bukan pesanan.",
+    "eventTitle": "Acara ini setakat ini",
+    "eventOrders_one": "{{count}} pesanan",
+    "eventOrders_other": "{{count}} pesanan",
+    "eventCups_one": "{{count}} minuman",
+    "eventCups_other": "{{count}} minuman"
   },
   "menuAdmin": {
     "title": "Menu",

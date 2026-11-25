@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom'
 import {
+  BarChart3,
   BellRing,
   BellOff,
   BookOpen,
@@ -24,6 +25,7 @@ import { Chip, Skeleton, cx } from '../components/ui'
 
 const NAV = [
   { to: '/admin', labelKey: 'admin.board', Icon: LayoutGrid },
+  { to: '/admin/stats', labelKey: 'admin.stats', Icon: BarChart3 },
   { to: '/admin/menu', labelKey: 'admin.menu', Icon: BookOpen },
   { to: '/admin/modifiers', labelKey: 'admin.modifiers', Icon: SlidersHorizontal },
   { to: '/admin/ingredients', labelKey: 'admin.ingredients', Icon: Package },
@@ -100,6 +102,7 @@ export function AdminShell() {
     ['/admin/modifiers', 'admin.modifiers'],
     ['/admin/ingredients', 'admin.ingredients'],
     ['/admin/settings', 'admin.settings'],
+    ['/admin/stats', 'admin.stats'],
     ['/admin/menu', 'admin.menu'],
     ['/admin/qr', 'admin.qr'],
   ]
@@ -114,7 +117,7 @@ export function AdminShell() {
 
   return (
     <div className="flex min-h-dvh bg-canvas">
-      <aside className="no-print sticky top-0 flex h-dvh w-20 shrink-0 flex-col items-center gap-1 border-r border-hairline bg-panel py-3">
+      <aside className="no-print sticky top-0 flex h-dvh w-20 shrink-0 flex-col items-center gap-1 overflow-y-auto border-r border-hairline bg-panel py-3">
         <div className="mb-2 grid size-11 place-items-center rounded-[var(--radius-sm)] bg-brand-900 text-gold-300" aria-hidden="true">
           <svg viewBox="0 0 24 24" className="size-6" fill="none">
             <path d="M5 8h11v6a5.5 5.5 0 0 1-11 0z" fill="currentColor" />

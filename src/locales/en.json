@@ -156,6 +156,7 @@
     "settings": "Settings",
     "modifiers": "Options",
     "ingredients": "Ingredients",
+    "stats": "Numbers",
     "noAccess": "Sign in to continue"
   },
   "settingsPanel": {
@@ -259,6 +260,24 @@
     "unitG": "grams",
     "unitMl": "millilitres",
     "unitPcs": "pieces"
+  },
+  "stats": {
+    "hint": "Only real orders are counted. Today means today in Brunei time.",
+    "empty": "No orders yet today. These numbers appear after the first one.",
+    "orders": "Orders",
+    "cups": "Drinks",
+    "taken": "Taken",
+    "cancelled": "Cancelled",
+    "topDrinks": "What people are ordering",
+    "cupsCount_one": "{{count}} drink",
+    "cupsCount_other": "{{count}} drinks",
+    "byHour": "When orders come in",
+    "byHourHint": "Drinks per hour, not orders.",
+    "eventTitle": "This event so far",
+    "eventOrders_one": "{{count}} order",
+    "eventOrders_other": "{{count}} orders",
+    "eventCups_one": "{{count}} drink",
+    "eventCups_other": "{{count}} drinks"
   },
   "menuAdmin": {
     "title": "Menu",
