@@ -64,7 +64,7 @@ insert into public.events (
   max_cups_per_hour, max_cups_per_day, max_queue_cups, per_person_cooldown_seconds,
   auto_accept, default_payment_method, message_banner, require_name
 ) values (
-  public.seed_demo_id('event-1'), 'Open House Drinks', 'Your name here', true, true, 'BND',
+  public.seed_demo_id('event-1'), 'ScanLu', 'Your name here', true, true, 'BND',
   false, 2, 4, 2,
   20, 150, 16, 120,
   -- The demo starts with auto accept off so the whole lifecycle is visible on the

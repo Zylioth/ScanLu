@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type RealtimeChannel, type SupabaseClient } from '@supabase/supabase-js'
 import {
   OrderError,
   type Backend,
@@ -19,14 +19,48 @@ import {
  * Supabase backend (system.md §5 to §10).
  *
  * Written against supabase/migrations/0001_init.sql, so every call here maps to
- * a table, view or security-definer RPC defined in that file. It is NOT yet
- * exercised against a live project: see DECISIONS.md entry on Supabase status.
+ * a table, view or security-definer RPC defined in that file. The guest paths
+ * (menu, guest session, place_order, cancel, realtime) are verified against the
+ * live project. The admin RPCs and image upload are not yet: see DECISIONS.md.
  */
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
 let client: SupabaseClient | null = null
+
+/* ----------------------------------------------------------------- realtime */
+
+// Every useQuery in the app calls subscribe(), and realtime-js returns an
+// existing channel when the topic already matches. That made the second
+// subscriber throw "cannot add postgres_changes callbacks after subscribe()"
+// and cost the admin board its live updates. One shared channel that fans out
+// to a listener set avoids the collision entirely.
+const LIVE_TABLES = ['orders', 'order_items', 'menu_items', 'events', 'ingredients'] as const
+
+let channel: RealtimeChannel | null = null
+let closeTimer: number | undefined
+let topicCount = 0
+const listeners = new Set<() => void>()
+
+function openChannel() {
+  if (channel) return
+  // A unique topic per channel means a channel that is still being removed can
+  // never be handed back to a new subscriber.
+  let next = sb().channel(`ohpos-${(topicCount += 1)}`)
+  for (const table of LIVE_TABLES) {
+    next = next.on('postgres_changes', { event: '*', schema: 'public', table }, () => {
+      for (const listener of listeners) listener()
+    })
+  }
+  channel = next.subscribe()
+}
+
+function closeChannel() {
+  const current = channel
+  channel = null
+  if (current) void sb().removeChannel(current)
+}
 
 function sb(): SupabaseClient {
   if (!client) {
@@ -321,17 +355,22 @@ export const supabaseBackend: Backend = {
   },
 
   subscribe(listener) {
-    const c = sb()
-    const channel = c
-      .channel('ohpos')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, listener)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, listener)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, listener)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, listener)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'ingredients' }, listener)
-      .subscribe()
+    listeners.add(listener)
+    if (closeTimer !== undefined) {
+      window.clearTimeout(closeTimer)
+      closeTimer = undefined
+    }
+    openChannel()
     return () => {
-      void c.removeChannel(channel)
+      listeners.delete(listener)
+      // Several query hooks unmount and remount together, and StrictMode does it
+      // twice in development. Wait before dropping the channel, so a remount
+      // cancels the close instead of racing it.
+      if (listeners.size > 0) return
+      closeTimer = window.setTimeout(() => {
+        closeTimer = undefined
+        if (listeners.size === 0) closeChannel()
+      }, 1000)
     }
   },
 

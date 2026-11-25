@@ -15,15 +15,27 @@ path (`supabaseBackend.ts`) is a thin adapter over tables and RPCs.
 tabs, not devices. This is stated in the README and as a strip under the admin
 header, so nobody relies on it at the open house by accident.
 
-**Supabase is wired but not yet run against a live project.** No project existed
-while building this, so `supabase/migrations/0001_init.sql` was written to the
-exact contract the adapter calls and then validated three ways: every statement
-parses against the real PostgreSQL grammar (`libpg_query`), the RPC names and
+**Supabase is live, and the guest path is proven against it.** The project runs
+`0001_init.sql` plus `seed.sql`. Checked against the real database: the views the
+adapter reads, RLS hiding another guest's orders, an anonymous session,
+`place_order` returning `order_id` / `display_number` / `estimated_ready_at`, a
+`postgres_changes` INSERT arriving on the guest's own channel, and
+`customer_cancel_order` putting the stock back. Not yet exercised: the admin RPCs
+(`set_order_status`, `ring_again`) and image upload, because those need the admin
+password. Treat the first admin sign-in as their integration test.
+
+The migration was validated offline before that too: every statement parses
+against the real PostgreSQL grammar (`libpg_query`), and the RPC names and
 parameter names are byte-identical to the `rpc()` calls in
-`supabaseBackend.ts`, and the seed reuses the demo ids through a stable slug
-hash. What is *not* proven is behaviour on a live database, so treat the first
-deploy as an integration test. Expected first snags are a column rename or a
-Storage bucket policy, not the limit logic.
+`supabaseBackend.ts`.
+
+**One realtime channel is shared by every query hook.** `realtime-js` returns the
+existing channel when the topic matches, so the second `useQuery` to subscribe was
+thrown by `.on()` ("cannot add postgres_changes callbacks after subscribe()") and
+the admin board silently lost its live updates. The adapter now opens one channel,
+fans events out to a listener set, and closes it a second after the last listener
+leaves so StrictMode's double mount does not tear it down. Each channel also gets
+a numbered topic, so a channel that is still being removed is never handed back.
 
 **The SQL test file avoids psql meta-commands** (`\set`, `\echo`) so it runs in
 the Supabase SQL editor as well as psql. Use

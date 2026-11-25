@@ -35,9 +35,22 @@ jobs:
       - name: Build for the /ScanLu/ subpath
         run: npm run build:pages
         env:
-          # Baked into the bundle, so the QR code and print card point at the
-          # deployed site instead of localhost. Safe to commit: this is a URL.
+          # Baked into the bundle at build time, so they have to be here rather
+          # than in a local .env file that never reaches the runner.
+          #
+          # All of these are public on purpose. VITE_* values end up inside the
+          # JavaScript every guest downloads, and the publishable key is built
+          # for exactly that. The RLS policies in
+          # supabase/migrations/0001_init.sql are what protect the data. Never
+          # put the service_role key in this file.
+          #
+          # Emptying VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY silently drops
+          # the site back to the browser demo backend, which looks like a broken
+          # deployment rather than a config mistake.
           VITE_PUBLIC_APP_URL: https://zylioth.github.io/ScanLu
+          VITE_SUPABASE_URL: https://qbafknjgqcdhheziregq.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_3slrqglCmJMMjcFqnirQKA_6j9xgie4
+          VITE_ADMIN_EMAIL: amirsabrin8@gmail.com
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -69,28 +69,49 @@ Demo mode limits, stated plainly:
 
 ---
 
-## Going live on Supabase
+## Backend: Supabase
 
-1. Create a Supabase project.
-2. Run the SQL in order, in the SQL editor:
-   - `supabase/migrations/0001_init.sql`
-   - `supabase/seed.sql` (the same eleven drinks as the demo)
-3. Create your admin user in Authentication, then add them to `admins`:
+The live site reads and writes a real database, so a guest's phone and the host's
+iPad see the same orders. What is already set up in the project:
+
+1. `supabase/migrations/0001_init.sql` then `supabase/seed.sql`, run in the SQL
+   editor. The seed also adds the four tables to the `supabase_realtime`
+   publication, which is what gives the admin board live updates.
+2. **Anonymous sign-ins enabled** under Authentication, Sign In / Providers.
+   Guests cannot order without it.
+3. An admin user, listed in `admins`:
 
    ```sql
-   insert into admins (user_id) values ('<your auth user uuid>');
+   insert into public.admins (user_id)
+   select id from auth.users where email = '<your admin email>'
+   on conflict do nothing;
    ```
 
-4. Copy `.env.example` to `.env.local` and fill in the URL and anon key. Set
-   `VITE_PUBLIC_APP_URL` to the address your guests will scan.
-5. `npm run build` and deploy `dist` to Cloudflare Pages. `public/_redirects`
-   already handles the SPA fallback.
+4. `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` and `VITE_ADMIN_EMAIL` sit in
+   `.github/workflows/deploy.yml` for the Pages build, and in `.env.local` for
+   local development. They are public on purpose: every `VITE_*` value is baked
+   into the JavaScript guests download. The RLS policies are what protect the
+   data, and the `service_role` key belongs in neither file.
 
-The app picks Supabase automatically when `VITE_SUPABASE_URL` and
-`VITE_SUPABASE_ANON_KEY` are present. Nothing else changes.
+Captcha stays off. Turning on Turnstile makes Supabase demand a captcha token on
+anonymous sign-in, and the adapter does not send one yet; the env slot
+`VITE_TURNSTILE_SITE_KEY` is reserved for when it does.
 
-Admin sign-in in Supabase mode uses email plus password from
-`VITE_ADMIN_EMAIL`; in demo mode it is the passcode above.
+The app switches to Supabase whenever `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` are both present, and falls back to the browser demo
+otherwise. No component changes.
+
+Admin sign-in is `VITE_ADMIN_EMAIL` plus that account's password. The demo
+passcode only exists in demo mode. The publishable key is public by design and
+ships inside the bundle; the RLS policies in the migration are what protect the
+data. Never put the `service_role` key in a `VITE_*` variable.
+
+To put your own name on the menu header and the printed QR card:
+
+```sql
+update public.events set event_name = 'ScanLu', host_name = 'Your name';
+```
+
 
 ---
 
@@ -119,8 +140,11 @@ node scripts/serve-pages.mjs 4174
 SMOKE_BASE=http://localhost:4174/ScanLu SMOKE_PAGES=1 node scripts/smoke.mjs
 ```
 
-Pages is static only, so this hosts the app in demo mode until Supabase is
-connected. The SQL and the client for that are already in `supabase/`.
+Pages serves the static bundle; the data lives in Supabase. The Supabase values
+come from the workflow itself, so the build has them without any repository
+settings. Blanking `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` still produces
+a working build, it just falls back to the browser demo, which is the confusing
+way for the live site to stop showing real orders.
 
 ## Scripts
 
@@ -140,6 +164,12 @@ connected. The SQL and the client for that are already in `supabase/`.
 
 The smoke test needs the dev server running. It fails on any console error and
 on horizontal overflow at phone width.
+
+Against the live database the admin password is not available to the test, so
+`SMOKE_GUEST_ONLY=1 node scripts/smoke.mjs` stops after the guest flow. That is
+still enough to prove `place_order`, the display-number counters and the realtime
+subscription. When you do want the admin half, pass the password in rather than
+committing it: `SMOKE_ADMIN_PASSWORD=... node scripts/smoke.mjs`.
 
 ---
 

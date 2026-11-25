@@ -11,6 +11,12 @@ const BASE = process.env.SMOKE_BASE ?? 'http://localhost:5173'
 // GitHub Pages answers deep links with 404.html, so the document itself reports
 // 404 even though the app boots. Everything else must still be clean.
 const pagesMode = process.env.SMOKE_PAGES === '1'
+// Demo mode signs in with the passcode; Supabase mode signs in with the admin's
+// real password, so pass it in rather than committing it.
+const ADMIN_SECRET = process.env.SMOKE_ADMIN_PASSWORD ?? '1234'
+// Against a real database the admin password is not available to the test, and
+// the guest flow on its own proves place_order, the counters and RLS.
+const GUEST_ONLY = process.env.SMOKE_GUEST_ONLY === '1'
 const OUT = 'screenshots'
 mkdirSync(OUT, { recursive: true })
 
@@ -84,66 +90,70 @@ try {
   await page.screenshot({ path: `${OUT}/04-ticket.png` })
 
   /* ---------------------------------------------------------------- admin */
-  await page.setViewportSize({ width: 1180, height: 820 })
-  await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
-  await page.waitForURL('**/admin/login')
-  await page.getByLabel('Passcode').fill('1234')
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await page.waitForURL('**/admin', { timeout: 10000 })
-  await page.getByRole('heading', { name: 'Order board' }).waitFor()
-  await page.screenshot({ path: `${OUT}/05-board.png` })
-  log('board open')
-
-  const card = page.locator('article').filter({ hasText: displayNumber ?? '' }).last()
-  await card.getByRole('button', { name: 'Start' }).click()
-  await page.waitForTimeout(600)
-  await page.screenshot({ path: `${OUT}/06-board-preparing.png` })
-
-  const movingCard = page.locator('article').filter({ hasText: displayNumber ?? '' }).last()
-  await movingCard.getByRole('button', { name: 'Ready' }).click()
-  await page.waitForTimeout(800)
-  await page.screenshot({ path: `${OUT}/07-board-ready.png` })
-  log('advanced to ready')
-
-  /* --------------------------------------------------- guest ready state */
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto(page.url().replace('/admin', '/menu'), { waitUntil: 'networkidle' })
-  await page.locator('.ticket').first().waitFor({ timeout: 8000 }).catch(() => {})
-  // Navigate to the ticket directly through the "your ticket" shortcut.
-  const shortcut = page.getByRole('link', { name: /Your ticket/ })
-  if (await shortcut.count()) {
-    await shortcut.first().click()
-  }
-  await page.waitForURL('**/ticket/**', { timeout: 8000 })
-  await page.waitForTimeout(2200)
-  await page.screenshot({ path: `${OUT}/08-ready-alert.png` })
-  const readyVisible = await page.getByText(/Your drink is ready/i).first().isVisible()
-  log(`ready alert visible: ${readyVisible}`)
-
-  const confirm = page.getByRole('button', { name: /Confirm collected/ })
-  if (await confirm.count()) {
-    await confirm.first().click()
-    await page.waitForTimeout(900)
-    await page.screenshot({ path: `${OUT}/09-collected.png` })
-    log('collected confirmed')
+  if (GUEST_ONLY) {
+    log('guest flow done, skipping the admin flow (SMOKE_GUEST_ONLY=1)')
   } else {
-    problems.push('Confirm collected button missing on ready ticket')
+    await page.setViewportSize({ width: 1180, height: 820 })
+    await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
+    await page.waitForURL('**/admin/login')
+    await page.getByLabel('Passcode').fill(ADMIN_SECRET)
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.waitForURL('**/admin', { timeout: 10000 })
+    await page.getByRole('heading', { name: 'Order board' }).waitFor()
+    await page.screenshot({ path: `${OUT}/05-board.png` })
+    log('board open')
+
+    const card = page.locator('article').filter({ hasText: displayNumber ?? '' }).last()
+    await card.getByRole('button', { name: 'Start' }).click()
+    await page.waitForTimeout(600)
+    await page.screenshot({ path: `${OUT}/06-board-preparing.png` })
+
+    const movingCard = page.locator('article').filter({ hasText: displayNumber ?? '' }).last()
+    await movingCard.getByRole('button', { name: 'Ready' }).click()
+    await page.waitForTimeout(800)
+    await page.screenshot({ path: `${OUT}/07-board-ready.png` })
+    log('advanced to ready')
+
+    /* --------------------------------------------------- guest ready state */
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto(page.url().replace('/admin', '/menu'), { waitUntil: 'networkidle' })
+    await page.locator('.ticket').first().waitFor({ timeout: 8000 }).catch(() => {})
+    // Navigate to the ticket directly through the "your ticket" shortcut.
+    const shortcut = page.getByRole('link', { name: /Your ticket/ })
+    if (await shortcut.count()) {
+      await shortcut.first().click()
+    }
+    await page.waitForURL('**/ticket/**', { timeout: 8000 })
+    await page.waitForTimeout(2200)
+    await page.screenshot({ path: `${OUT}/08-ready-alert.png` })
+    const readyVisible = await page.getByText(/Your drink is ready/i).first().isVisible()
+    log(`ready alert visible: ${readyVisible}`)
+
+    const confirm = page.getByRole('button', { name: /Confirm collected/ })
+    if (await confirm.count()) {
+      await confirm.first().click()
+      await page.waitForTimeout(900)
+      await page.screenshot({ path: `${OUT}/09-collected.png` })
+      log('collected confirmed')
+    } else {
+      problems.push('Confirm collected button missing on ready ticket')
+    }
+
+    /* ------------------------------------------------------------- qr page */
+    await page.setViewportSize({ width: 1180, height: 820 })
+    await page.goto(`${BASE}/admin/qr`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(1200)
+    await page.screenshot({ path: `${OUT}/10-qr.png` })
+    const qrImg = await page.locator('img[alt*="Scan to order"]').count()
+    if (qrImg === 0) problems.push('QR image did not render')
+    log('qr page rendered')
+
+    /* ----------------------------------------------------------- menu admin */
+    await page.goto(`${BASE}/admin/menu`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: `${OUT}/11-admin-menu.png` })
+    log('menu admin rendered')
   }
-
-  /* ------------------------------------------------------------- qr page */
-  await page.setViewportSize({ width: 1180, height: 820 })
-  await page.goto(`${BASE}/admin/qr`, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(1200)
-  await page.screenshot({ path: `${OUT}/10-qr.png` })
-  const qrImg = await page.locator('img[alt*="Scan to order"]').count()
-  if (qrImg === 0) problems.push('QR image did not render')
-  log('qr page rendered')
-
-  /* ----------------------------------------------------------- menu admin */
-  await page.goto(`${BASE}/admin/menu`, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(500)
-  await page.screenshot({ path: `${OUT}/11-admin-menu.png` })
-  log('menu admin rendered')
 
   /* --------------------------------------------------------- mobile board */
   await page.setViewportSize({ width: 430, height: 932 })
