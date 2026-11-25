@@ -3,6 +3,10 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+    # Docs and screenshots do not change the build, so they skip the deploy.
+    paths-ignore:
+      - 'screenshots/**'
+      - '**.md'
   workflow_dispatch:
 
 permissions:
