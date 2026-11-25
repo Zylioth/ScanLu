@@ -662,9 +662,17 @@ export const localBackend: Backend = {
     writeDb(db)
   },
 
-  async uploadMenuImage(itemId, file) {
-    const { processImageToDataUrl } = await import('./image')
-    const url = await processImageToDataUrl(file, { maxWidth: 900, maxHeight: 675, quality: 0.72 })
+  async listAllMenuItems() {
+    const db = readDb()
+    return db.items
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((i) => ({ ...i, available_units: availableUnits(db, i) }))
+  },
+
+  async uploadMenuImage(itemId, image) {
+    const { blobToDataUrl } = await import('./image')
+    const url = await blobToDataUrl(image)
     const db = readDb()
     const item = db.items.find((i) => i.id === itemId)
     if (item) {
@@ -672,6 +680,15 @@ export const localBackend: Backend = {
       writeDb(db)
     }
     return url
+  },
+
+  async removeMenuImage(itemId) {
+    const db = readDb()
+    const item = db.items.find((i) => i.id === itemId)
+    if (item) {
+      item.image_url = null
+      writeDb(db)
+    }
   },
 
   subscribe(listener) {

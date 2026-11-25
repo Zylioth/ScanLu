@@ -70,6 +70,20 @@ from the orders themselves, and no backend or SQL change. It only counts real
 orders, never estimates, and money is hidden entirely in free mode rather than
 showing a meaningless zero.
 
+**Menu photos live in Storage, and the URL is derived, never stored.** The screen
+crops, zooms and encodes once, then hands the finished WebP blob to the backend,
+so what the host framed is what guests get. It is stored at a stable
+`<itemId>/hero.webp` and overwritten on replace, because the old timestamped name
+left the previous photo in the bucket on every change. `image_url` is not written
+to the table at all: it is built from `image_path` plus `image_updated_at` as a
+cache buster when reading. Removing a photo, or deleting the drink, deletes the
+file too. Demo mode keeps a small data URL in localStorage, which is what that
+mode is for.
+
+The admin menu reads `listAllMenuItems()`, which does not filter on `is_active`.
+The guest query does, so using it in the editor meant switching a drink off
+removed it from the only screen that could switch it back on.
+
 **One realtime channel is shared by every query hook.** `realtime-js` returns the
 existing channel when the topic matches, so the second `useQuery` to subscribe was
 thrown by `.on()` ("cannot add postgres_changes callbacks after subscribe()") and

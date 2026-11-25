@@ -97,8 +97,12 @@ export async function processImage(file: File, opts: ProcessOptions = {}): Promi
 
 /** Demo-mode storage: images become data URLs in localStorage, so keep them small. */
 export async function processImageToDataUrl(file: File, opts: ProcessOptions = {}): Promise<string> {
-  const blob = await processImage(file, opts)
-  return await new Promise<string>((resolve, reject) => {
+  return blobToDataUrl(await processImage(file, opts))
+}
+
+/** Read a blob back as a data URL, for the preview and for demo-mode storage. */
+export function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(String(reader.result))
     reader.onerror = () => reject(new Error('read_failed'))

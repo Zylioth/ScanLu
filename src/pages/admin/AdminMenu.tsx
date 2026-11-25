@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Camera, ImageOff, Plus, Trash2 } from 'lucide-react'
 import { getBackend } from '../../lib/backend'
-import { useMenu, useSettings } from '../../lib/hooks'
+import { useAllMenuItems, useMenu, useSettings } from '../../lib/hooks'
 import type { MenuItem, MenuItemView } from '../../lib/types'
 import { formatMoney } from '../../lib/format'
-import { processImage, validateImageFile } from '../../lib/image'
+import { blobToDataUrl, processImage, validateImageFile } from '../../lib/image'
 import { Button, Field, Sheet, Stepper } from '../../components/ui'
 import { useToast } from '../../components/Toast'
 import { CupArt } from '../../components/ItemSheet'
@@ -51,6 +51,7 @@ function toDraft(item: MenuItem): Draft {
 export function AdminMenu() {
   const { t, i18n } = useTranslation()
   const menu = useMenu()
+  const allItems = useAllMenuItems()
   const settings = useSettings()
   const { showToast } = useToast()
 
@@ -60,11 +61,17 @@ export function AdminMenu() {
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
   const [deleteTarget, setDeleteTarget] = useState<MenuItemView | null>(null)
+  // The processed photo waiting to be uploaded, and whether the saved one
+  // should be removed. Neither is applied until Save.
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null)
+  const [photoCleared, setPhotoCleared] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const lastFile = useRef<File | null>(null)
 
   const categories = menu.data?.categories ?? []
-  const items = menu.data?.items ?? []
+  // Every item, including the ones switched off: the guest query filters them
+  // out, which used to make an inactive drink impossible to switch back on.
+  const items = allItems.data ?? []
   const freeMode = settings.data?.free_mode ?? false
 
   const grouped = useMemo(
@@ -106,6 +113,8 @@ export function AdminMenu() {
     })
     setZoom(1)
     setPhotoError(null)
+    setPhotoBlob(null)
+    setPhotoCleared(false)
   }
 
   const applyFile = async (file: File, zoomValue: number) => {
@@ -118,12 +127,11 @@ export function AdminMenu() {
     setPhotoBusy(true)
     try {
       const blob = await processImage(file, { maxWidth: 1200, maxHeight: 900, quality: 0.8, zoom: zoomValue })
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(String(reader.result))
-        reader.onerror = () => reject(new Error('read_failed'))
-        reader.readAsDataURL(blob)
-      })
+      const dataUrl = await blobToDataUrl(blob)
+      // Keep the processed blob itself: it is what gets uploaded, so the zoom
+      // chosen here is exactly what the guest sees.
+      setPhotoBlob(blob)
+      setPhotoCleared(false)
       setDraft((prev) => (prev ? { ...prev, image_url: dataUrl } : prev))
     } catch {
       setPhotoError(t('menuAdmin.processing'))
@@ -138,11 +146,22 @@ export function AdminMenu() {
     setSaving(true)
     try {
       const backend = await getBackend()
-      await backend.saveMenuItem({
+      const pending = photoBlob
+      const cleared = photoCleared
+      // A freshly picked photo is only a preview here. Sending it would store
+      // base64 in the row instead of a file, which is what bloated the menu.
+      const saved = await backend.saveMenuItem({
         ...draft,
         name_ms: draft.name_ms.trim() || draft.name_en.trim(),
         description_ms: draft.description_ms.trim() || draft.description_en.trim(),
+        image_url: pending || cleared ? null : draft.image_url,
       })
+      if (pending) await backend.uploadMenuImage(saved.id, pending)
+      else if (cleared) await backend.removeMenuImage(saved.id)
+
+      setPhotoBlob(null)
+      setPhotoCleared(false)
+      allItems.refresh()
       menu.refresh()
       setDraft(null)
       showToast({ message: t('menuAdmin.saved'), tone: 'success' })
@@ -157,6 +176,7 @@ export function AdminMenu() {
     if (!deleteTarget) return
     const backend = await getBackend()
     await backend.deleteMenuItem(deleteTarget.id)
+    allItems.refresh()
     menu.refresh()
     setDeleteTarget(null)
     showToast({ message: t('menuAdmin.remove'), tone: 'neutral' })
@@ -206,6 +226,8 @@ export function AdminMenu() {
                       setDraft(toDraft(item))
                       setZoom(1)
                       setPhotoError(null)
+                      setPhotoBlob(null)
+                      setPhotoCleared(false)
                     }}
                     className="min-h-10 rounded-full border border-hairline px-3 text-sm font-medium text-ink hover:bg-ink/5"
                   >
@@ -273,7 +295,12 @@ export function AdminMenu() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setDraft({ ...draft, image_url: null })}
+                      onClick={() => {
+                        setPhotoBlob(null)
+                        setPhotoCleared(true)
+                        lastFile.current = null
+                        setDraft({ ...draft, image_url: null })
+                      }}
                     >
                       <ImageOff className="size-4" aria-hidden="true" />
                       {t('menuAdmin.remove')}

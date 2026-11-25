@@ -269,7 +269,15 @@ export interface Backend {
   restockIngredient(id: string): Promise<void>
   saveMenuItem(item: MenuItem): Promise<MenuItem>
   deleteMenuItem(id: string): Promise<void>
-  uploadMenuImage(itemId: string, file: File): Promise<string>
+  /** Admin only. Every item, including the ones switched off, for the menu editor. */
+  listAllMenuItems(): Promise<MenuItemView[]>
+  /**
+   * Stores an already cropped and resized WebP blob and points the item at it.
+   * The screen does the cropping, so the zoom the host chose is what gets kept.
+   */
+  uploadMenuImage(itemId: string, image: Blob): Promise<string>
+  /** Admin only. Detaches the photo and deletes the stored file. */
+  removeMenuImage(itemId: string): Promise<void>
   /**
    * Admin only. Modifier groups are edited one row at a time rather than saved
    * as a whole, so an option that a guest is already looking at keeps its id.

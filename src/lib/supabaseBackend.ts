@@ -4,7 +4,6 @@ import {
   type Backend,
   type Category,
   type Ingredient,
-  type MenuItem,
   type MenuItemView,
   type ModifierGroup,
   type Order,
@@ -155,6 +154,32 @@ function mapOrder(row: Record<string, unknown>): Order {
 
 const ORDER_SELECT = '*, order_items(*)'
 
+/**
+ * Public URL for a stored menu photo. image_updated_at versions the URL, so a
+ * replaced photo is not served from the CDN cache after the upload.
+ */
+function publicImageUrl(
+  path: string | null | undefined,
+  updatedAt: string | null | undefined,
+): string | null {
+  if (!path) return null
+  const { data } = sb().storage.from('menu-images').getPublicUrl(path)
+  const base = data?.publicUrl ?? null
+  if (!base) return null
+  return updatedAt ? `${base}?v=${Date.parse(updatedAt) || updatedAt}` : base
+}
+
+/** A menu row plus the public URL derived from its stored path. */
+function menuItemRow(row: Record<string, unknown>): MenuItemView {
+  return {
+    ...(row as unknown as MenuItemView),
+    image_url: publicImageUrl(
+      (row.image_path as string | null | undefined) ?? null,
+      (row.image_updated_at as string | null | undefined) ?? null,
+    ),
+  }
+}
+
 export const supabaseBackend: Backend = {
   kind: 'supabase',
 
@@ -182,12 +207,12 @@ export const supabaseBackend: Backend = {
 
     return {
       categories: (cats.data as Category[]) ?? [],
-      items: ((items.data as MenuItem[]) ?? []).map(
-        (i): MenuItemView => ({
-          ...i,
-          available_units: availById.has(i.id) ? (availById.get(i.id) as number | null) : null,
-        }),
-      ),
+      items: ((items.data as Record<string, unknown>[]) ?? []).map((row) => ({
+        ...menuItemRow(row),
+        available_units: availById.has(row.id as string)
+          ? (availById.get(row.id as string) as number | null)
+          : null,
+      })),
       groups: groupList,
     }
   },
@@ -443,6 +468,9 @@ export const supabaseBackend: Backend = {
     const row: Record<string, unknown> = { ...item }
     delete row.recipe
     delete row.available_units
+    // image_url is derived from image_path when reading, so writing it would
+    // only duplicate the URL and let the two drift apart.
+    delete row.image_url
 
     const { data, error } = await sb().from('menu_items').upsert(row).select().single()
     if (error) rpcError(error)
@@ -456,27 +484,70 @@ export const supabaseBackend: Backend = {
       if (insertError) rpcError(insertError)
     }
 
-    return { ...(data as MenuItem), recipe }
+    return { ...menuItemRow(data as Record<string, unknown>), recipe }
   },
 
   async deleteMenuItem(id) {
-    const { error } = await sb().from('menu_items').delete().eq('id', id)
+    const c = sb()
+    // Read the path first: deleting the row does not delete the object, and a
+    // photo nobody points at would sit in the bucket forever.
+    const { data: existing } = await c.from('menu_items').select('image_path').eq('id', id).maybeSingle()
+    const { error } = await c.from('menu_items').delete().eq('id', id)
     if (error) rpcError(error)
+    const path = (existing as { image_path: string | null } | null)?.image_path
+    if (path) await c.storage.from('menu-images').remove([path])
   },
 
-  async uploadMenuImage(itemId, file) {
-    const { processImage } = await import('./image')
-    const blob = await processImage(file, { maxWidth: 1200, maxHeight: 900, quality: 0.8 })
-    const path = `${itemId}/${Date.now()}.webp`
+  async listAllMenuItems() {
     const c = sb()
-    const { error } = await c.storage.from('menu-images').upload(path, blob, {
+    const [items, availability] = await Promise.all([
+      // No is_active filter: this is what lets the admin switch a drink back on.
+      c.from('menu_items_full').select('*').order('sort_order'),
+      c.from('menu_availability').select('*'),
+    ])
+    if (items.error) rpcError(items.error)
+    const availById = new Map<string, number | null>(
+      ((availability.data as { menu_item_id: string; available_units: number | null }[]) ?? []).map(
+        (row) => [row.menu_item_id, row.available_units],
+      ),
+    )
+    return ((items.data as Record<string, unknown>[]) ?? []).map((row) => ({
+      ...menuItemRow(row),
+      available_units: availById.has(row.id as string)
+        ? (availById.get(row.id as string) as number | null)
+        : null,
+    }))
+  },
+
+  async uploadMenuImage(itemId, image) {
+    const c = sb()
+    // One stable file per drink, overwritten on replace. A timestamped name
+    // would leave the old photo behind on every change.
+    const path = `${itemId}/hero.webp`
+    const { error } = await c.storage.from('menu-images').upload(path, image, {
       contentType: 'image/webp',
       upsert: true,
     })
     if (error) rpcError(error)
-    const { data } = c.storage.from('menu-images').getPublicUrl(path)
-    await c.from('menu_items').update({ image_path: path, image_updated_at: new Date().toISOString() }).eq('id', itemId)
-    return data.publicUrl
+    const updatedAt = new Date().toISOString()
+    const { error: updateError } = await c
+      .from('menu_items')
+      .update({ image_path: path, image_updated_at: updatedAt })
+      .eq('id', itemId)
+    if (updateError) rpcError(updateError)
+    return publicImageUrl(path, updatedAt) ?? ''
+  },
+
+  async removeMenuImage(itemId) {
+    const c = sb()
+    const { data } = await c.from('menu_items').select('image_path').eq('id', itemId).maybeSingle()
+    const path = (data as { image_path: string | null } | null)?.image_path
+    const { error } = await c
+      .from('menu_items')
+      .update({ image_path: null, image_updated_at: null })
+      .eq('id', itemId)
+    if (error) rpcError(error)
+    if (path) await c.storage.from('menu-images').remove([path])
   },
 
   subscribe(listener) {

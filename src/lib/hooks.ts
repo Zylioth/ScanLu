@@ -113,6 +113,11 @@ export function useIngredients() {
   return useBackendQuery<Ingredient[]>(async (backend) => backend.getIngredients(), [])
 }
 
+/** Admin menu editor: every item, including ones switched off. */
+export function useAllMenuItems() {
+  return useBackendQuery<MenuItemView[]>(async (backend) => backend.listAllMenuItems(), [])
+}
+
 /** Re-render on an interval so relative timers (age, ETA) stay honest. */
 export function useNow(intervalMs = 1000): number {
   const [now, setNow] = useState(() => Date.now())
