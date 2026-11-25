@@ -101,6 +101,9 @@ Admin sign-in in Supabase mode uses email plus password from
 | `npm run lint` | oxlint |
 | `npm run icons` | Regenerate PWA icons from the script |
 | `node scripts/smoke.mjs` | Real Chrome click-through of the guest and admin flows, writes `screenshots/` |
+| `node scripts/realtime.mjs` | Two tabs, one browser: proves orders, status changes and collection sync with no reload |
+| `node scripts/checks.mjs` | Dark theme, Bahasa Melayu, 320px phone, keyboard focus, pause toggle, A5 and A4 print sizing |
+| `node scripts/a11y-check.mjs` | WCAG contrast for every token pair the UI renders |
 
 The smoke test needs the dev server running. It fails on any console error and
 on horizontal overflow at phone width.

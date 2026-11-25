@@ -135,6 +135,55 @@ try {
   await page.getByRole('button', { name: 'Resume orders' }).click()
   await page.waitForTimeout(400)
   log('pause toggle works')
+
+  // Print stylesheet: chrome hidden, card visible at true A5 width, colour kept.
+  await page.setViewportSize({ width: 1180, height: 820 })
+  await page.goto(`${BASE}/admin/qr`, { waitUntil: 'networkidle' })
+  await page.waitForTimeout(900)
+  await page.emulateMedia({ media: 'print' })
+  await page.waitForTimeout(300)
+  const printState = await page.evaluate(() => {
+    const visible = (element) => element && getComputedStyle(element).display !== 'none'
+    const chrome = document.querySelector('aside.no-print')
+    const card = document.querySelector('.print-area')
+    const cardBox = card?.getBoundingClientRect()
+    const qr = card?.querySelector('img')
+    return {
+      chromeHidden: chrome ? !visible(chrome) : null,
+      cardVisible: visible(card),
+      cardWidthMm: cardBox ? Math.round((cardBox.width / 96) * 25.4) : null,
+      qrWidthMm: qr ? Math.round((qr.getBoundingClientRect().width / 96) * 25.4) : null,
+      qrLoaded: qr ? qr.complete && qr.naturalWidth > 0 : false,
+    }
+  })
+  await page.screenshot({ path: `${OUT}/18-qr-print.png` })
+  log(`print: ${JSON.stringify(printState)}`)
+  if (printState.chromeHidden !== true) problems.push('admin rail still visible when printing')
+  if (!printState.cardVisible) problems.push('QR card hidden when printing')
+  if (!printState.qrLoaded) problems.push('QR image not loaded for print')
+  if (printState.cardWidthMm !== null && Math.abs(printState.cardWidthMm - 148) > 6) {
+    problems.push(`print card is ${printState.cardWidthMm}mm wide, expected 148mm (A5)`)
+  }
+  if (printState.qrWidthMm !== null && printState.qrWidthMm < 50) {
+    problems.push(`QR prints ${printState.qrWidthMm}mm wide, too small to scan at 1m`)
+  }
+
+  // Switching to A4 must resize the printed card, not just the preview.
+  await page.emulateMedia({ media: 'screen' })
+  await page.getByLabel('Print size').selectOption('A4')
+  await page.waitForTimeout(300)
+  await page.emulateMedia({ media: 'print' })
+  await page.waitForTimeout(200)
+  const a4Width = await page.evaluate(() => {
+    const card = document.querySelector('.print-area')
+    const box = card?.getBoundingClientRect()
+    return box ? Math.round((box.width / 96) * 25.4) : null
+  })
+  log(`A4 print width: ${a4Width}mm`)
+  if (a4Width !== null && Math.abs(a4Width - 210) > 6) {
+    problems.push(`A4 card is ${a4Width}mm wide, expected 210mm`)
+  }
+  await page.emulateMedia({ media: 'screen' })
 } catch (error) {
   problems.push(`check failed: ${error.message}`)
   await page.screenshot({ path: `${OUT}/98-check-failure.png` }).catch(() => {})

@@ -82,6 +82,8 @@ export function AdminQR() {
 
   return (
     <div className="grid gap-4 p-3 lg:grid-cols-[320px_1fr]">
+      {/* The page size follows the selector; the stylesheet rule is only a fallback. */}
+      <style>{`@media print { @page { size: ${size} portrait; margin: 0; } }`}</style>
       <div className="no-print space-y-3 rounded-[var(--radius-md)] border border-hairline bg-panel p-4">
         <label className="block text-sm font-medium text-ink">
           Headline
@@ -138,7 +140,7 @@ export function AdminQR() {
 
       <div className="flex justify-center overflow-auto lg:max-h-[calc(100dvh-6rem)]">
         <div
-          className="print-area"
+          className="print-area flex-none"
           style={{
             width: `${paper.w}mm`,
             minHeight: `${paper.h}mm`,
