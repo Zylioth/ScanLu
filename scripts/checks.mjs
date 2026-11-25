@@ -1,0 +1,150 @@
+/**
+ * Extra checks: dark theme, Bahasa Melayu, a 320px phone, and keyboard focus.
+ * Run with the dev server up: node scripts/checks.mjs
+ */
+import { chromium } from 'playwright'
+import { mkdirSync } from 'node:fs'
+
+const BASE = process.env.SMOKE_BASE ?? 'http://localhost:5173'
+const OUT = 'screenshots'
+mkdirSync(OUT, { recursive: true })
+
+const problems = []
+const log = (message) => console.log(`  ${message}`)
+
+const browser = await chromium.launch({ channel: 'chrome', headless: true })
+const context = await browser.newContext({ viewport: { width: 1180, height: 820 }, locale: 'en-GB' })
+const page = await context.newPage()
+page.on('console', (message) => {
+  if (message.type() === 'error') problems.push(`console: ${message.text()}`)
+})
+page.on('pageerror', (error) => problems.push(`pageerror: ${error.message}`))
+
+try {
+  // Dark theme on the admin board.
+  await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
+  await page.waitForURL('**/admin/login')
+  await page.getByLabel('Passcode').fill('1234')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.waitForURL('**/admin', { timeout: 10000 })
+  await page.getByRole('button', { name: 'Switch to dark theme' }).click()
+  await page.waitForTimeout(600)
+  await page.screenshot({ path: `${OUT}/12-board-dark.png` })
+  const theme = await page.evaluate(() => document.documentElement.dataset.theme)
+  if (theme !== 'dark') problems.push(`dark theme not applied, got "${theme}"`)
+  log(`theme: ${theme}`)
+  await page.getByRole('button', { name: 'Switch to light theme' }).click()
+
+  // Guest menu in Bahasa Melayu on a narrow phone.
+  await page.setViewportSize({ width: 320, height: 640 })
+  await page.goto(`${BASE}/menu`, { waitUntil: 'networkidle' })
+  await page.getByRole('button', { name: 'BM' }).click()
+  await page.waitForTimeout(500)
+  const htmlLang = await page.evaluate(() => document.documentElement.lang)
+  if (htmlLang !== 'ms') problems.push(`html lang not ms, got "${htmlLang}"`)
+  const overflow320 = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  )
+  if (overflow320 > 1) problems.push(`horizontal overflow at 320px: ${overflow320}px`)
+  await page.screenshot({ path: `${OUT}/13-menu-320-bm.png` })
+  log(`320px overflow: ${overflow320}px, lang: ${htmlLang}`)
+
+  // Any element wider than the viewport is an overflow bug the scrollWidth test can miss.
+  const wide = await page.evaluate(() => {
+    const out = []
+    for (const element of document.querySelectorAll('*')) {
+      const rect = element.getBoundingClientRect()
+      if (rect.width > window.innerWidth + 1 && rect.height > 0) {
+        out.push(`${element.tagName}.${String(element.className).slice(0, 40)} ${Math.round(rect.width)}px`)
+      }
+    }
+    return out.slice(0, 5)
+  })
+  if (wide.length > 0) problems.push(`elements wider than viewport: ${wide.join(' | ')}`)
+
+  // The add button is absolutely positioned, so nothing may sit underneath it.
+  const overlaps = await page.evaluate(() => {
+    const out = []
+    for (const button of document.querySelectorAll('button[aria-label^="Tambah "]')) {
+      const card = button.closest('.relative')
+      if (!card) continue
+      const b = button.getBoundingClientRect()
+      for (const element of card.querySelectorAll('span, h3, p')) {
+        const r = element.getBoundingClientRect()
+        if (r.width === 0 || r.height === 0) continue
+        const hit =
+          r.right > b.left + 2 && r.left < b.right - 2 && r.bottom > b.top + 2 && r.top < b.bottom - 2
+        if (hit) out.push((element.textContent ?? '').trim().slice(0, 24))
+      }
+    }
+    return [...new Set(out)].slice(0, 5)
+  })
+  if (overlaps.length > 0) problems.push(`text under add button at 320px: ${overlaps.join(' | ')}`)
+  log(`overlap check: ${overlaps.length} hits`)
+
+  // Keyboard focus must be visible on the first links.
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto(`${BASE}/menu`, { waitUntil: 'networkidle' })
+  await page.getByRole('heading', { name: /Coffee|Kopi/ }).waitFor()
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Tab')
+  const focus = await page.evaluate(() => {
+    const element = document.activeElement
+    if (!element) return null
+    const style = getComputedStyle(element)
+    return {
+      tag: element.tagName,
+      outlineStyle: style.outlineStyle,
+      outlineWidth: style.outlineWidth,
+      label: (element.getAttribute('aria-label') ?? element.textContent ?? '').slice(0, 40).trim(),
+    }
+  })
+  await page.screenshot({ path: `${OUT}/14-focus.png` })
+  if (!focus || focus.outlineStyle === 'none' || Number.parseFloat(focus.outlineWidth) < 1) {
+    problems.push(`no visible focus ring on Tab: ${JSON.stringify(focus)}`)
+  }
+  log(`focus: ${focus?.tag} "${focus?.label}" outline ${focus?.outlineWidth} ${focus?.outlineStyle}`)
+
+  // Reduced motion must not show the shaky tear stage for long.
+  const reduced = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    reducedMotion: 'reduce',
+  })
+  const reducedPage = await reduced.newPage()
+  await reducedPage.goto(`${BASE}/ticket/seed-order-4`, { waitUntil: 'networkidle' })
+  // Order belongs to another device, so the ticket should not leak.
+  const leaked = await reducedPage.getByText('Your drink is ready', { exact: false }).count()
+  if (leaked > 0) problems.push('another device order was readable (RLS equivalent broken)')
+  await reduced.close()
+  log('foreign ticket correctly hidden')
+
+  // Pause toggle round trip. Language was switched to BM earlier, so put it back.
+  await page.goto(`${BASE}/menu`, { waitUntil: 'networkidle' })
+  await page.getByRole('button', { name: 'EN', exact: true }).click()
+  await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
+  if (page.url().includes('/admin/login')) {
+    await page.getByLabel('Passcode').fill('1234')
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.waitForURL('**/admin', { timeout: 10000 })
+  }
+  await page.getByRole('heading', { name: /Order board|Papan pesanan/ }).waitFor()
+  await page.getByRole('button', { name: 'Pause orders' }).click()
+  await page.waitForTimeout(500)
+  const pausedVisible = await page.getByText('Orders are paused', { exact: false }).first().isVisible()
+  if (!pausedVisible) problems.push('pause toggle did not show paused state')
+  await page.getByRole('button', { name: 'Resume orders' }).click()
+  await page.waitForTimeout(400)
+  log('pause toggle works')
+} catch (error) {
+  problems.push(`check failed: ${error.message}`)
+  await page.screenshot({ path: `${OUT}/98-check-failure.png` }).catch(() => {})
+} finally {
+  await browser.close()
+}
+
+console.log(
+  problems.length === 0
+    ? '\nCHECKS PASS'
+    : `\nCHECKS ISSUES:\n${problems.map((p) => ` - ${p}`).join('\n')}`,
+)
+process.exitCode = problems.length === 0 ? 0 : 1

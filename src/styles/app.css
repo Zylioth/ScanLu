@@ -1,0 +1,458 @@
+/* Paper, notches, pattern and motion that are too specific for utilities. */
+
+:root {
+  --ketupat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cg fill='none' stroke='%23D9A441' stroke-width='1' stroke-opacity='0.34'%3E%3Cpath d='M0 14 L14 0 L28 14 L14 28 Z'/%3E%3Cpath d='M7 14 L14 7 L21 14 L14 21 Z'/%3E%3C/g%3E%3C/svg%3E");
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* -------------------------------------------------------------------------- */
+/* Ticket                                                                      */
+/* -------------------------------------------------------------------------- */
+
+.ticket {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  background: var(--color-panel);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-ticket);
+  isolation: isolate;
+}
+
+.ticket::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--noise);
+  opacity: 0.028;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.ticket-head {
+  position: relative;
+  background-color: var(--color-brand-900);
+  background-image: var(--ketupat);
+  background-size: 28px 28px;
+  color: var(--color-cream-50);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  padding: 1.1rem 1.25rem 1rem;
+  border-bottom: 2px solid var(--color-gold-500);
+  overflow: hidden;
+}
+
+.ticket-body {
+  padding: 1.25rem 1.25rem 1.5rem;
+}
+
+.ticket-number {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 16vw, 5rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* Perforation with half-circle notches cut out at both edges. */
+.ticket-perf {
+  position: relative;
+  height: 22px;
+  display: flex;
+  align-items: center;
+}
+
+.ticket-perf::before {
+  content: '';
+  flex: 1;
+  border-top: 2px dashed var(--color-hairline);
+}
+
+.notch {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-canvas);
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.notch-left {
+  left: -11px;
+}
+
+.notch-right {
+  right: -11px;
+}
+
+.ticket-barcode {
+  height: 34px;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  opacity: 0.75;
+}
+
+.ticket-barcode span {
+  display: block;
+  background: var(--color-ink);
+  border-radius: 0.5px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Ticket entry                                                                */
+/* -------------------------------------------------------------------------- */
+
+@keyframes ticket-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) rotate(-1.5deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+.ticket-enter {
+  animation: ticket-in 520ms var(--ease-spring) both;
+}
+
+/* Preparing: the number breathes, steam rises off the cup. */
+@keyframes breath {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.018);
+  }
+}
+
+.is-preparing .ticket-number {
+  animation: breath 3s ease-in-out infinite;
+}
+
+@keyframes steam-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(2px) scaleX(0.9);
+  }
+  35% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-9px) scaleX(1.15);
+  }
+}
+
+.steam-wisp {
+  animation: steam-rise 3s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+/* -------------------------------------------------------------------------- */
+/* READY: shake, split, settle                                                 */
+/* -------------------------------------------------------------------------- */
+
+@keyframes tear-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  18% {
+    transform: translateX(-4px);
+  }
+  36% {
+    transform: translateX(4px);
+  }
+  54% {
+    transform: translateX(-3px);
+  }
+  72% {
+    transform: translateX(3px);
+  }
+  88% {
+    transform: translateX(-1px);
+  }
+}
+
+.tear-shake {
+  animation: tear-shake 250ms ease-in-out 1 both;
+}
+
+@keyframes tear-top {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(26px, -58px) rotate(-6deg) scale(1.04);
+    opacity: 0;
+  }
+}
+
+.tear-top {
+  transform-origin: left bottom;
+  animation: tear-top 650ms var(--ease-out) both;
+}
+
+@keyframes tear-bottom {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}
+
+.tear-bottom {
+  animation: tear-bottom 650ms var(--ease-out) both;
+}
+
+@keyframes ready-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) rotate(-2deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.03) rotate(0.6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.ready-card {
+  animation: ready-in 520ms var(--ease-spring) both;
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(217, 164, 65, 0.55),
+      var(--shadow-ticket);
+  }
+  50% {
+    box-shadow:
+      0 0 0 14px rgba(217, 164, 65, 0),
+      var(--shadow-ticket);
+  }
+}
+
+.ready-glow {
+  animation: glow-pulse 2.4s ease-out infinite;
+}
+
+@keyframes bell-swing {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(12deg);
+  }
+  75% {
+    transform: rotate(-12deg);
+  }
+}
+
+.bell-swing {
+  animation: bell-swing 1.6s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+@keyframes ring-wave {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+.ring-wave {
+  animation: ring-wave 1.4s ease-out infinite;
+}
+
+/* Confetti: twelve particles, CSS variables set per particle in JSX. */
+@keyframes confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--dx, 0px), 88px, 0) rotate(var(--rot, 220deg));
+  }
+}
+
+.confetti-bit {
+  animation: confetti-fall var(--dur, 1.4s) ease-in var(--delay, 0s) both;
+}
+
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-8deg) scale(1.6);
+  }
+  70% {
+    opacity: 1;
+    transform: rotate(-8deg) scale(0.96);
+  }
+  100% {
+    opacity: 0.92;
+    transform: rotate(-8deg) scale(1);
+  }
+}
+
+.stamp {
+  animation: stamp-in 260ms var(--ease-out) both;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Slide to confirm                                                            */
+/* -------------------------------------------------------------------------- */
+
+.slide-track {
+  position: relative;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--color-brand-900);
+  overflow: hidden;
+  touch-action: none;
+}
+
+.slide-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--color-brand-500);
+  transition: width 90ms linear;
+}
+
+.slide-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: var(--color-gold-300);
+  color: var(--color-cocoa-900);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+}
+
+.slide-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-cream-50);
+  padding-left: 2.25rem;
+  pointer-events: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Admin board                                                                 */
+/* -------------------------------------------------------------------------- */
+
+.board-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--color-panel-2);
+  border-radius: var(--radius-lg);
+}
+
+.board-column-body {
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  flex: 1;
+}
+
+.order-card-new {
+  animation: card-arrive 480ms var(--ease-spring) both;
+}
+
+@keyframes card-arrive {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.98);
+    box-shadow: 0 0 0 0 rgba(217, 164, 65, 0.8);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 6px rgba(217, 164, 65, 0.18);
+  }
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(217, 164, 65, 0);
+  }
+}
+
+.board-column .board-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.board-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-hairline);
+  border-radius: 999px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Print: QR card only                                                         */
+/* -------------------------------------------------------------------------- */
+
+@media print {
+  @page {
+    size: A5 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    background: #fff;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-area {
+    display: block !important;
+    position: static !important;
+    width: 148mm;
+    height: 210mm;
+    margin: 0 auto;
+    box-shadow: none !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

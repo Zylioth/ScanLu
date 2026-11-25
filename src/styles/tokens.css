@@ -1,0 +1,173 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Design tokens. Values come from design.md §3.
+   Semantic names (canvas/panel/ink/hairline) rather than raw colour names, so
+   the dark theme only overrides what actually changes.
+   --------------------------------------------------------------------------- */
+@theme {
+  /* Brand */
+  --color-brand-900: #0b3d2e;
+  --color-brand-800: #0e4c39;
+  --color-brand-700: #12664a;
+  --color-brand-500: #1e9a6b;
+  --color-brand-200: #a8d8c1;
+  --color-gold-500: #d9a441;
+  --color-gold-300: #f0d08a;
+  --color-gold-100: #f8e8c4;
+  --color-cream-50: #fff9ee;
+  --color-cream-100: #f8eedb;
+  --color-cream-200: #efdfc4;
+  --color-cocoa-900: #2b1b12;
+  --color-cocoa-600: #6b5646;
+  --color-line: #e7d8bd;
+
+  /* Semantic */
+  --color-success: #1e9a6b;
+  --color-warning: #e39a1b;
+  --color-danger: #c8412b;
+  --color-info: #2f6fb3;
+
+  /* Text-safe variants: the fills above are too light to read as small text. */
+  --color-success-ink: #12664a;
+  --color-warning-ink: #8a5a06;
+  --color-info-ink: #26609c;
+
+  /* Order status */
+  --color-status-placed: #2f6fb3;
+  --color-status-preparing: #e39a1b;
+  --color-status-ready: #1e9a6b;
+  --color-status-collected: #8a7a6b;
+  --color-status-cancelled: #c8412b;
+  --color-status-preparing-ink: #8a5a06;
+  --color-status-collected-ink: #6f6054;
+
+  /* Surfaces and text (the only part the dark theme swaps) */
+  --color-canvas: #fff9ee;
+  --color-panel: #ffffff;
+  --color-panel-2: #f8eedb;
+  --color-ink: #2b1b12;
+  --color-ink-muted: #6b5646;
+  --color-hairline: #e7d8bd;
+  --color-focus: #2f6fb3;
+
+  /* Type */
+  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, serif;
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+  --text-ticket: 5rem;
+  --text-ticket--line-height: 1;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+
+  /* Elevation: three steps only, so shadow stays a hierarchy signal */
+  --shadow-card: 0 1px 2px rgba(43, 27, 18, 0.06), 0 6px 18px rgba(43, 27, 18, 0.08);
+  --shadow-lift: 0 2px 4px rgba(43, 27, 18, 0.08), 0 14px 30px rgba(43, 27, 18, 0.14);
+  --shadow-ticket: 0 14px 34px rgba(11, 61, 46, 0.25);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 420ms;
+}
+
+[data-theme='dark'] {
+  --color-canvas: #101a16;
+  --color-panel: #17251f;
+  --color-panel-2: #1e3029;
+  --color-ink: #f6eedc;
+  --color-ink-muted: #b9ae98;
+  --color-hairline: #2c4338;
+  --color-gold-500: #e8b755;
+  --color-success-ink: #86d9b4;
+  --color-warning-ink: #f2c063;
+  --color-info-ink: #9cc4ef;
+  --color-danger: #f0806c;
+  --color-cream-50: #101a16;
+  --color-cream-100: #17251f;
+  --color-cocoa-900: #f6eedc;
+  --color-cocoa-600: #b9ae98;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.45), 0 14px 30px rgba(0, 0, 0, 0.5);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+  }
+
+  /* Every enabled control shows it can be used; disabled ones say so. */
+  a[href],
+  button:not(:disabled),
+  summary,
+  select:not(:disabled),
+  label[for],
+  input[type='checkbox'],
+  input[type='radio'],
+  [role='button']:not([aria-disabled='true']),
+  [role='tab'] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* Numbers that line up in lists and counters. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
