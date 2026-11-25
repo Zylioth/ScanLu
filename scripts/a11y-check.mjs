@@ -14,6 +14,8 @@ const pairs = [
   ['brand 900 number on white ticket', '#0B3D2E', '#FFFFFF', 4.5],
   ['gold 300 number on brand 700 (ready)', '#F0D08A', '#12664A', 4.5],
   ['cocoa on gold 300 (chips)', '#2B1B12', '#F0D08A', 4.5],
+  ['cocoa on gold 500 (gold button)', '#2B1B12', '#D9A441', 4.5],
+  ['cream on brand 700 hover', '#FFF9EE', '#0E4C39', 4.5],
   ['danger text on page', '#C8412B', '#FFF9EE', 4.5],
   ['success ink on panel', '#12664A', '#FFFFFF', 4.5],
   ['warning ink on panel', '#8A5A06', '#FFFFFF', 4.5],
@@ -29,6 +31,10 @@ const pairs = [
   ['dark success ink', '#86D9B4', '#17251F', 4.5],
   ['dark warning ink', '#F2C063', '#17251F', 4.5],
   ['dark info ink', '#9CC4EF', '#17251F', 4.5],
+  // cream-50 and cocoa-900 are absolute in both themes, so these are the real
+  // dark-mode button colours rather than the remapped ones.
+  ['dark cocoa on gold 500', '#2B1B12', '#E8B755', 4.5],
+  ['dark cream on brand 700 hover', '#FFF9EE', '#0E4C39', 4.5],
 ]
 
 function channel(value) {

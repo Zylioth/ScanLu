@@ -84,6 +84,22 @@ The admin menu reads `listAllMenuItems()`, which does not filter on `is_active`.
 The guest query does, so using it in the editor meant switching a drink off
 removed it from the only screen that could switch it back on.
 
+**The dark theme only swaps surfaces, never paper or ink.** It used to remap
+`cream-50` to the canvas and `cocoa-900` to text, which are the absolute colours
+of the ticket paper, the text on a brand button and the text on a gold chip. The
+result was primary buttons rendering near-black on dark green (2.9:1) and the
+modal backdrop turning into a white veil. Those four tokens are no longer
+remapped; canvas, panel, ink and hairline still are. The contrast script had
+already been asserting the correct cream-on-brand ratio, so the theme was
+contradicting its own check.
+
+**Instrument Sans replaced Inter, IBM Plex Mono replaced JetBrains Mono.**
+Fraunces stays for headings: it is warm, it has real character, and it carries
+the shop's voice. Inter for body was the single most default choice available and
+made the UI read slightly anonymous. Instrument Sans is narrower and pairs with
+Fraunces; IBM Plex Mono sits under a serif far better than JetBrains did on the
+ticket numbers. Both are self hosted through Fontsource, so no network at runtime.
+
 **One realtime channel is shared by every query hook.** `realtime-js` returns the
 existing channel when the topic matches, so the second `useQuery` to subscribe was
 thrown by `.on()` ("cannot add postgres_changes callbacks after subscribe()") and
