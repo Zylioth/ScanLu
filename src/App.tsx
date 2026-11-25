@@ -15,6 +15,9 @@ const AdminGate = lazy(() => import('./components/AdminShell').then((m) => ({ de
 const AdminBoard = lazy(() => import('./pages/admin/AdminBoard').then((m) => ({ default: m.AdminBoard })))
 const AdminMenuPage = lazy(() => import('./pages/admin/AdminMenu').then((m) => ({ default: m.AdminMenu })))
 const AdminQrPage = lazy(() => import('./pages/admin/AdminQR').then((m) => ({ default: m.AdminQR })))
+const AdminSettingsPage = lazy(() =>
+  import('./pages/admin/AdminSettings').then((m) => ({ default: m.AdminSettings })),
+)
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -66,6 +69,7 @@ export default function App() {
                 <Route index element={<AdminBoard />} />
                 <Route path="menu" element={<AdminMenuPage />} />
                 <Route path="qr" element={<AdminQrPage />} />
+                <Route path="settings" element={<AdminSettingsPage />} />
               </Route>
             </Route>
 

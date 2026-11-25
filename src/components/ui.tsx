@@ -238,6 +238,11 @@ export function Sheet({
 }) {
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
+  // Parents pass a fresh arrow on every render. Holding it in a ref keeps the
+  // effect below dependent on `open` alone, so typing in a sheet no longer
+  // re-runs it and hands focus back to whatever was focused before it opened.
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
 
   useEffect(() => {
     if (!open) return
@@ -248,7 +253,7 @@ export function Sheet({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.stopPropagation()
-        onClose()
+        closeRef.current()
         return
       }
       if (event.key !== 'Tab' || !panelRef.current) return
@@ -274,7 +279,7 @@ export function Sheet({
       document.body.style.overflow = overflow
       previous?.focus?.()
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
 

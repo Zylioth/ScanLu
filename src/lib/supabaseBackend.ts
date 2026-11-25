@@ -305,6 +305,21 @@ export const supabaseBackend: Backend = {
     return data as Settings
   },
 
+  async clearTodayOrders(confirm) {
+    if (confirm !== 'CLEAR') throw new OrderError('NOT_ALLOWED')
+    const { data, error } = await sb().rpc('clear_today', { p_confirm: confirm })
+    if (error) {
+      // PostgREST answers with this before RLS gets a say when the migration has
+      // not been run, and a bare "network error" would send you hunting.
+      if (error.code === 'PGRST202' || /could not find the function/i.test(error.message)) {
+        throw new OrderError('NETWORK', error.message, undefined, 'MIGRATION_MISSING')
+      }
+      rpcError(error)
+    }
+    const row = data as { deleted?: number } | null
+    return { deleted: Number(row?.deleted ?? 0) }
+  },
+
   async getIngredients() {
     const { data, error } = await sb().from('ingredients').select('*').order('name')
     if (error) rpcError(error)

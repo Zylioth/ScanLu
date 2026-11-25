@@ -29,6 +29,22 @@ against the real PostgreSQL grammar (`libpg_query`), and the RPC names and
 parameter names are byte-identical to the `rpc()` calls in
 `supabaseBackend.ts`.
 
+**"Clear today" deletes, because numbers cannot be reused.** Order numbers are
+protected by a unique index on the event, the day and the number, so zeroing the
+counter while the rows survive would make the next insert collide. `clear_today`
+therefore restores the stock, deletes the day's orders and drops that day's
+counter row in one security definer function, admin only. Other days are left
+alone, which is why the button says today. It needs
+`supabase/migrations/0002_admin_clear_today.sql`; without it the adapter reports
+a missing migration rather than a generic network error.
+
+**The sheet held focus with a ref, not a dependency.** `Sheet` re-ran its setup
+effect whenever `onClose` changed identity, and its cleanup restores focus to
+whatever was focused before the sheet opened. Every parent passes an inline
+arrow, so every keystroke in the drink editor ran the cleanup and took focus
+away, which made the form type one character per click. The callback now lives
+in a ref and the effect depends on `open` alone.
+
 **One realtime channel is shared by every query hook.** `realtime-js` returns the
 existing channel when the topic matches, so the second `useQuery` to subscribe was
 thrown by `.on()` ("cannot add postgres_changes callbacks after subscribe()") and

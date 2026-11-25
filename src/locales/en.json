@@ -153,6 +153,7 @@
     "note": "Note",
     "lowStock": "Low stock: {{items}}",
     "demoBadge": "Demo mode: this browser only",
+    "settings": "Settings",
     "noAccess": "Sign in to continue"
   },
   "settingsPanel": {
@@ -175,7 +176,22 @@
     "autoAccept": "Send new orders straight to Making",
     "save": "Save settings",
     "saved": "Settings saved",
-    "close": "Close"
+    "close": "Close",
+    "preview": "What guests see",
+    "dangerTitle": "Start over",
+    "clearToday": "Clear today's orders",
+    "clearTodayHint": "Deletes today's orders, puts their stock back, and restarts today's numbering at A-001. Earlier days stay untouched. This cannot be undone.",
+    "clearTodayCount_one": "{{count}} order today",
+    "clearTodayCount_other": "{{count}} orders today",
+    "clearConfirmTitle": "Clear today's orders?",
+    "clearConfirmBody_one": "{{count}} order from today is deleted, its stock returned, and the next order starts again at A-001. This cannot be undone.",
+    "clearConfirmBody_other": "{{count}} orders from today are deleted, their stock returned, and the next order starts again at A-001. This cannot be undone.",
+    "clearConfirmYes": "Yes, clear today",
+    "clearConfirmNo": "Keep them",
+    "cleared_one": "Cleared {{count}} order",
+    "cleared_other": "Cleared {{count}} orders",
+    "clearNothing": "No orders today",
+    "migrationMissing": "This needs the 0002 SQL migration run in Supabase first."
   },
   "menuAdmin": {
     "title": "Menu",

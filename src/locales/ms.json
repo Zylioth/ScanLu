@@ -153,6 +153,7 @@
     "note": "Nota",
     "lowStock": "Stok rendah: {{items}}",
     "demoBadge": "Mod demo: pelayar ini sahaja",
+    "settings": "Tetapan",
     "noAccess": "Masuk untuk teruskan"
   },
   "settingsPanel": {
@@ -175,7 +176,22 @@
     "autoAccept": "Pesanan baharu terus ke Dibuat",
     "save": "Simpan tetapan",
     "saved": "Tetapan disimpan",
-    "close": "Tutup"
+    "close": "Tutup",
+    "preview": "Paparan untuk tetamu",
+    "dangerTitle": "Mula semula",
+    "clearToday": "Kosongkan pesanan hari ini",
+    "clearTodayHint": "Padam pesanan hari ini, pulangkan stoknya, dan mula semula nombor hari ini dari A-001. Hari sebelumnya tidak disentuh. Ini tidak boleh dibatalkan.",
+    "clearTodayCount_one": "{{count}} pesanan hari ini",
+    "clearTodayCount_other": "{{count}} pesanan hari ini",
+    "clearConfirmTitle": "Kosongkan pesanan hari ini?",
+    "clearConfirmBody_one": "{{count}} pesanan hari ini akan dipadam, stoknya dipulangkan, dan pesanan seterusnya bermula semula dari A-001. Ini tidak boleh dibatalkan.",
+    "clearConfirmBody_other": "{{count}} pesanan hari ini akan dipadam, stoknya dipulangkan, dan pesanan seterusnya bermula semula dari A-001. Ini tidak boleh dibatalkan.",
+    "clearConfirmYes": "Ya, kosongkan",
+    "clearConfirmNo": "Simpan dulu",
+    "cleared_one": "{{count}} pesanan dikosongkan",
+    "cleared_other": "{{count}} pesanan dikosongkan",
+    "clearNothing": "Tiada pesanan hari ini",
+    "migrationMissing": "Ciri ini perlukan migrasi SQL 0002 di Supabase dahulu."
   },
   "menuAdmin": {
     "title": "Menu",

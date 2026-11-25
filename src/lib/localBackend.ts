@@ -557,6 +557,21 @@ export const localBackend: Backend = {
     return db.settings
   },
 
+  async clearTodayOrders(confirm) {
+    if (confirm !== 'CLEAR') throw new OrderError('NOT_ALLOWED')
+    const db = readDb()
+    const today = dayKey()
+    const todays = db.orders.filter((order) => dayKey(new Date(order.placed_at)) === today)
+    for (const order of todays) {
+      if (!isCancelled(order)) restoreStock(db, order)
+    }
+    db.orders = db.orders.filter((order) => dayKey(new Date(order.placed_at)) !== today)
+    // Numbering restarts with the orders, so the next ticket today is A-001.
+    delete db.counters[today]
+    writeDb(db)
+    return { deleted: todays.length }
+  },
+
   async getIngredients() {
     return readDb().ingredients
   },

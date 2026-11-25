@@ -227,6 +227,12 @@ export interface Backend {
   ringAgain(id: string): Promise<void>
   getSettings(): Promise<Settings>
   updateSettings(patch: Partial<Settings>): Promise<Settings>
+  /**
+   * Admin only. Deletes today's orders, puts their stock back and restarts
+   * today's numbering, so the next order is A-001 again. `confirm` must be the
+   * literal 'CLEAR'; anything else is refused rather than quietly obeyed.
+   */
+  clearTodayOrders(confirm: string): Promise<{ deleted: number }>
   getIngredients(): Promise<Ingredient[]>
   saveMenuItem(item: MenuItem): Promise<MenuItem>
   deleteMenuItem(id: string): Promise<void>

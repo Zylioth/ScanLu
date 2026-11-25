@@ -77,6 +77,9 @@ iPad see the same orders. What is already set up in the project:
 1. `supabase/migrations/0001_init.sql` then `supabase/seed.sql`, run in the SQL
    editor. The seed also adds the four tables to the `supabase_realtime`
    publication, which is what gives the admin board live updates.
+2. `supabase/migrations/0002_admin_clear_today.sql`, which adds the admin only
+   `clear_today` action behind the "Clear today's orders" button. Everything else
+   on `/admin/settings` works without it, that one button needs it.
 2. **Anonymous sign-ins enabled** under Authentication, Sign In / Providers.
    Guests cannot order without it.
 3. An admin user, listed in `admins`:

@@ -18,11 +18,12 @@ export function AdminQR() {
   const { t } = useTranslation()
   const settings = useSettings()
   const [size, setSize] = useState<PaperSize>('A5')
-  const [headline, setHeadline] = useState('Selamat Hari Raya')
+  const [headline, setHeadline] = useState('')
   const [subtext, setSubtext] = useState('Scan to order your drink · Imbas untuk pesan minuman')
   const [footer, setFooter] = useState('')
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const svgRef = useRef<string | null>(null)
+  const headlineEdited = useRef(false)
 
   const targetUrl = useMemo(() => {
     // VITE_PUBLIC_APP_URL wins (set in CI), otherwise derive from where the app
@@ -61,12 +62,15 @@ export function AdminQR() {
     }
   }, [targetUrl])
 
+  // Seed the printed card from the host's own words. This used to hard-code
+  // "Selamat Hari Raya", which is wrong on every other day of the year.
   useEffect(() => {
-    if (settings.data && footer === '') {
-      setFooter(t('qr.footer'))
-      setHeadline(t('qr.headline'))
+    if (!settings.data) return
+    if (!headlineEdited.current) {
+      setHeadline(settings.data.message_banner?.trim() || settings.data.event_name)
     }
-  }, [settings.data, footer, t])
+    setFooter((prev) => prev || (settings.data!.free_mode ? t('qr.footer') : ''))
+  }, [settings.data, t])
 
   const download = (kind: 'png' | 'svg') => {
     if (kind === 'png' && qrDataUrl) {
@@ -98,7 +102,10 @@ export function AdminQR() {
           Headline
           <input
             value={headline}
-            onChange={(event) => setHeadline(event.target.value.slice(0, 40))}
+            onChange={(event) => {
+              headlineEdited.current = true
+              setHeadline(event.target.value.slice(0, 40))
+            }}
             className="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-hairline bg-panel px-3 text-sm text-ink"
           />
         </label>

@@ -10,6 +10,7 @@ import {
   LogOut,
   Moon,
   QrCode,
+  Settings,
   Sun,
   WifiOff,
 } from 'lucide-react'
@@ -23,6 +24,7 @@ const NAV = [
   { to: '/admin', labelKey: 'admin.board', Icon: LayoutGrid },
   { to: '/admin/menu', labelKey: 'admin.menu', Icon: BookOpen },
   { to: '/admin/qr', labelKey: 'admin.qr', Icon: QrCode },
+  { to: '/admin/settings', labelKey: 'admin.settings', Icon: Settings },
 ]
 
 export function AdminGate() {
@@ -95,7 +97,9 @@ export function AdminShell() {
         ? t('admin.menu')
         : location.pathname.startsWith('/admin/qr')
           ? t('admin.qr')
-          : t('admin.title')
+          : location.pathname.startsWith('/admin/settings')
+            ? t('admin.settings')
+            : t('admin.title')
 
   const togglePause = async () => {
     const backend = await getBackend()
