@@ -1,9 +1,12 @@
-# Open House Drinks
+# ScanLu
 
 A small QR drink-ordering system for a home espresso setup, built for a Hari Raya
 open house. Guests scan a code, order from their phone, and get a digital ticket
 that tears itself apart and rings when the drink is ready. The host runs the whole
 thing from an iPad.
+
+"ScanLu" is the app. The event name on the ticket and the printed QR card is data,
+set in Admin settings, so the same install can serve a different occasion.
 
 Built from `design.md` and `system.md` in this repo.
 

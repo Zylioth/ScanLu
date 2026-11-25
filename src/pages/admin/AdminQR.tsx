@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import QRCode from 'qrcode'
 import { Download, Printer } from 'lucide-react'
 import { useSettings } from '../../lib/hooks'
+import { APP_NAME } from '../../lib/brand'
 import { Button } from '../../components/ui'
 
 type PaperSize = 'A6' | 'A5' | 'A4'
@@ -177,7 +178,7 @@ export function AdminQR() {
                 {headline}
               </p>
               <p style={{ margin: '2mm 0 0', fontSize: 12, color: '#6B5646' }}>
-                {settings.data?.event_name ?? 'Open House Drinks'}
+                {settings.data?.event_name ?? APP_NAME}
               </p>
             </div>
 

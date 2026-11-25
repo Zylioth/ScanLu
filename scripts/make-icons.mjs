@@ -3,7 +3,7 @@
  * of a broken reference. Run with `npm run icons` after changing the mark.
  *
  * The mark: gold crescent above a cream cup, on emerald. It is a placeholder
- * identity until the open house has its own name and logo.
+ * identity until ScanLu gets a real logo.
  */
 import { deflateSync } from 'node:zlib'
 import { writeFileSync, mkdirSync } from 'node:fs'

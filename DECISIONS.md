@@ -46,6 +46,21 @@ as "about N min", never as a promise.
 
 ## Product
 
+**The app is called ScanLu; the event is data.** `APP_NAME` in `src/lib/brand.ts`
+is the product (browser title, manifest, admin sign-in). The name on the guest
+header, the ticket and the printed QR card comes from `events.event_name`, which
+seeds as "ScanLu" but can be renamed per occasion without a code change.
+
+**Paused orders get a card, not a banner.** A thin strip at the top is easy to
+miss for someone who scans while the host is catching up, so the guest menu now
+leads with a full emerald card: what happened, the host's own message, and a
+line saying they can still browse. A slim bottom bar repeats the state while
+they scroll, and it sits in the slot the cart bar would use, so it never covers
+a control. Item cards stop rendering their add button and get a dashed border.
+They are deliberately **not** dimmed: `opacity` on the card dropped body text to
+about 4.2:1, under AA, so the state is carried by the missing button and the
+border instead of by muting the text.
+
 **`auto_accept` is seeded `false`.** `system.md` says the column defaults to
 true. The column still defaults to true in SQL, but the seeded demo event starts
 with it off so the board shows the whole lifecycle (New, Making, Ready) instead

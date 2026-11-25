@@ -13,10 +13,10 @@ import type {
  * Rename anything in Admin > Menu once you run it for real.
  */
 
-export const SEED_VERSION = 4
+export const SEED_VERSION = 5
 
 export const seedSettings: Settings = {
-  event_name: 'Open House Drinks',
+  event_name: 'ScanLu',
   host_name: 'Your name here',
   orders_open: true,
   free_mode: false,

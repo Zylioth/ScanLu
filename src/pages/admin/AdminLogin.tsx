@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Coffee, Lock } from 'lucide-react'
 import { getBackend, isDemoMode } from '../../lib/backend'
+import { APP_NAME } from '../../lib/brand'
 import { DEMO_PASSCODE_HINT } from '../../lib/localBackend'
 import { Button, Field } from '../../components/ui'
 import { LanguageToggle } from '../../components/LanguageToggle'
@@ -39,10 +40,8 @@ export function AdminLogin() {
               <Coffee className="size-6" aria-hidden="true" />
             </span>
             <div>
-              <p className="font-display text-lg leading-tight font-semibold text-ink">
-                {t('admin.login')}
-              </p>
-              <p className="text-xs text-ink-muted">{t('admin.loginHint')}</p>
+              <p className="font-display text-xl leading-tight font-semibold text-ink">{APP_NAME}</p>
+              <p className="text-xs text-ink-muted">{t('admin.login')}</p>
             </div>
           </div>
           <LanguageToggle />
@@ -52,6 +51,7 @@ export function AdminLogin() {
           onSubmit={(event) => void submit(event)}
           className="space-y-4 rounded-[var(--radius-lg)] border border-hairline bg-panel p-5 shadow-[var(--shadow-card)]"
         >
+          <p className="text-xs text-ink-muted">{t('admin.loginHint')}</p>
           <Field
             label={t('admin.passcode')}
             type="password"

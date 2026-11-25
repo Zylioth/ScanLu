@@ -18,6 +18,7 @@
     "queue": "{{count}} in the queue",
     "paused": "Orders are paused",
     "pausedBody": "The machine is taking a short break. Try again in a bit.",
+    "closedBrowse": "You can still look through the menu while you wait.",
     "closed": "Orders are closed",
     "emptyMenu": "No drinks on the menu yet",
     "emptyMenuBody": "The host has not added anything. Check back in a moment.",

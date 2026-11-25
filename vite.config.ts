@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Open House Drinks',
-        short_name: 'Open House',
+        name: 'ScanLu',
+        short_name: 'ScanLu',
         description: 'Scan, order a drink, get a ticket.',
         theme_color: '#0B3D2E',
         background_color: '#FFF9EE',

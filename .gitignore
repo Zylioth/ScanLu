@@ -30,3 +30,7 @@ dist-ssr
 # playwright
 /test-results
 
+
+# local playwright temp profile
+.tmp/
+

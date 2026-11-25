@@ -18,6 +18,7 @@
     "queue": "{{count}} dalam giliran",
     "paused": "Pesanan ditahan sekejap",
     "pausedBody": "Mesin tengah berehat sekejap. Cuba lagi sebentar.",
+    "closedBrowse": "Anda masih boleh lihat menu sementara menunggu.",
     "closed": "Pesanan ditutup",
     "emptyMenu": "Menu masih kosong",
     "emptyMenuBody": "Tuan rumah belum tambah apa-apa. Cuba lihat sebentar lagi.",

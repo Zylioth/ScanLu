@@ -151,13 +151,60 @@ try {
     await page.waitForURL('**/admin', { timeout: 10000 })
   }
   await page.getByRole('heading', { name: /Order board|Papan pesanan/ }).waitFor()
+
+  // The paused state must reach a guest who is already on the menu.
+  const guestPage = await context.newPage()
+  await guestPage.setViewportSize({ width: 390, height: 844 })
+  await guestPage.goto(`${BASE}/menu`, { waitUntil: 'networkidle' })
+  await guestPage.getByRole('heading', { name: 'Coffee' }).waitFor()
+
   await page.getByRole('button', { name: 'Pause orders' }).click()
-  await page.waitForTimeout(500)
-  const pausedVisible = await page.getByText('Orders are paused', { exact: false }).first().isVisible()
+  const pausedVisible = await page
+    .getByText('Orders are paused', { exact: false })
+    .first()
+    .waitFor({ timeout: 4000 })
+    .then(() => true)
+    .catch(() => false)
   if (!pausedVisible) problems.push('pause toggle did not show paused state')
+
+  const pausedCard = await guestPage
+    .getByRole('heading', { name: 'Orders are paused' })
+    .waitFor({ timeout: 5000 })
+    .then(() => true)
+    .catch(() => false)
+  if (!pausedCard) problems.push('paused card did not appear on the guest menu')
+
+  const pausedState = await guestPage.evaluate(() => {
+    const cards = [...document.querySelectorAll('button[type="button"]')].filter((button) =>
+      button.className.includes('rounded-[var(--radius-md)]'),
+    )
+    const pauseTexts = [...document.querySelectorAll('h2, p')].filter(
+      (element) => element.textContent === 'Orders are paused',
+    ).length
+    return {
+      addButtons: document.querySelectorAll('button[aria-label^="Add "], button[aria-label^="Tambah "]')
+        .length,
+      disabledCards: cards.filter((card) => card.disabled).length,
+      pauseTexts,
+    }
+  })
+  log(`paused: ${JSON.stringify(pausedState)}`)
+  if (pausedState.addButtons !== 0) problems.push('add buttons still rendered while orders are paused')
+  if (pausedState.disabledCards === 0) problems.push('menu cards were still tappable while paused')
+  if (pausedState.pauseTexts < 2) {
+    problems.push('paused state not shown in both the card and the bottom bar')
+  }
+  await guestPage.screenshot({ path: `${OUT}/19-menu-paused.png` })
+
   await page.getByRole('button', { name: 'Resume orders' }).click()
-  await page.waitForTimeout(400)
-  log('pause toggle works')
+  await page.waitForTimeout(600)
+  const cardGone = await guestPage
+    .getByRole('heading', { name: 'Orders are paused' })
+    .isVisible()
+    .catch(() => false)
+  if (cardGone) problems.push('paused card stayed after resuming orders')
+  await guestPage.close()
+  log('pause toggle works and reaches the guest menu')
 
   // Print stylesheet: chrome hidden, card visible at true A5 width, colour kept.
   await page.setViewportSize({ width: 1180, height: 820 })

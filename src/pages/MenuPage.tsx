@@ -47,8 +47,10 @@ function MenuItemCard({
         onClick={onOpen}
         disabled={blocked}
         className={cx(
+          // Text stays at full contrast when unavailable; only the photo and the
+          // chip row carry the state, so nothing drops below WCAG AA.
           'flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-hairline bg-panel p-3 text-left transition-colors',
-          blocked ? 'opacity-60' : 'hover:border-brand-500/50 hover:bg-panel-2/50',
+          blocked ? 'border-dashed' : 'hover:border-brand-500/50 hover:bg-panel-2/50',
         )}
       >
         <div className="size-20 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-panel-2">
@@ -59,10 +61,13 @@ function MenuItemCard({
               width={1200}
               height={900}
               loading="lazy"
-              className={cx('size-full object-cover', soldOut && 'grayscale')}
+              className={cx('size-full object-cover', soldOut && 'grayscale opacity-70')}
             />
           ) : (
-            <CupArt className={cx('size-full', soldOut && 'opacity-50 grayscale')} tint={tint} />
+            <CupArt
+              className={cx('size-full', soldOut && 'opacity-50 grayscale')}
+              tint={tint}
+            />
           )}
         </div>
         <div className="mr-11 min-w-0 flex-1">
@@ -194,12 +199,7 @@ export function MenuPage() {
         ) : null}
       </header>
 
-      {ordersClosed ? (
-        <Banner tone="danger" icon={<PauseCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />}>
-          <strong className="block">{t('menu.paused')}</strong>
-          <span className="font-normal">{status.data?.banner || t('menu.pausedBody')}</span>
-        </Banner>
-      ) : status.data?.banner ? (
+      {!ordersClosed && status.data?.banner ? (
         <Banner tone="gold" icon={<Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />}>
           {status.data.banner}
         </Banner>
@@ -223,6 +223,26 @@ export function MenuPage() {
               <ArrowRight className="size-4" aria-hidden="true" />
             </div>
           </Link>
+        ) : null}
+
+        {ordersClosed ? (
+          <section
+            aria-live="polite"
+            className="mb-4 overflow-hidden rounded-[var(--radius-lg)] bg-brand-900 p-5 text-cream-50 shadow-[var(--shadow-card)]"
+          >
+            <div className="flex items-start gap-3.5">
+              <span className="grid size-12 shrink-0 place-items-center rounded-full bg-gold-300/15 text-gold-300">
+                <PauseCircle className="size-6" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <h2 className="font-display text-2xl leading-tight">{t('menu.paused')}</h2>
+                <p className="mt-1.5 text-sm leading-snug text-cream-50/85">
+                  {status.data?.banner || t('menu.pausedBody')}
+                </p>
+                <p className="mt-2.5 text-xs text-gold-300">{t('menu.closedBrowse')}</p>
+              </div>
+            </div>
+          </section>
         ) : null}
 
         {status.data && !ordersClosed ? (
@@ -302,7 +322,19 @@ export function MenuPage() {
         )}
       </main>
 
-      {cups > 0 ? (
+      {ordersClosed ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-2xl px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="flex items-center gap-2.5 rounded-[var(--radius-lg)] bg-brand-900 px-4 py-3 text-cream-50 shadow-[var(--shadow-lift)]">
+            <PauseCircle className="size-5 shrink-0 text-gold-300" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{t('menu.paused')}</p>
+              {status.data?.banner ? (
+                <p className="truncate text-xs text-cream-50/75">{status.data.banner}</p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : cups > 0 ? (
         <div
           className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-2xl px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
           style={{ animation: 'ticket-in 320ms var(--ease-spring) both' }}
@@ -310,8 +342,7 @@ export function MenuPage() {
           <button
             type="button"
             onClick={() => navigate('/cart')}
-            disabled={ordersClosed}
-            className="flex w-full items-center justify-between gap-3 rounded-[var(--radius-lg)] bg-brand-700 px-4 py-3.5 text-cream-50 shadow-[var(--shadow-lift)] transition-transform active:scale-[0.99] disabled:opacity-60"
+            className="flex w-full items-center justify-between gap-3 rounded-[var(--radius-lg)] bg-brand-700 px-4 py-3.5 text-cream-50 shadow-[var(--shadow-lift)] transition-transform active:scale-[0.99]"
           >
             <span className="flex items-center gap-2 text-base font-semibold">
               <span className="tnum grid size-7 place-items-center rounded-full bg-gold-300 text-cocoa-900 text-sm font-bold">
