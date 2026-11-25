@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   LogOut,
   Moon,
+  Package,
   QrCode,
   Settings,
   SlidersHorizontal,
@@ -24,8 +25,9 @@ import { Chip, Skeleton, cx } from '../components/ui'
 const NAV = [
   { to: '/admin', labelKey: 'admin.board', Icon: LayoutGrid },
   { to: '/admin/menu', labelKey: 'admin.menu', Icon: BookOpen },
-  { to: '/admin/qr', labelKey: 'admin.qr', Icon: QrCode },
   { to: '/admin/modifiers', labelKey: 'admin.modifiers', Icon: SlidersHorizontal },
+  { to: '/admin/ingredients', labelKey: 'admin.ingredients', Icon: Package },
+  { to: '/admin/qr', labelKey: 'admin.qr', Icon: QrCode },
   { to: '/admin/settings', labelKey: 'admin.settings', Icon: Settings },
 ]
 
@@ -92,18 +94,17 @@ export function AdminShell() {
   const thisHour = cupsIn(all, now - 3600_000)
   const cap = settings.data?.max_cups_per_hour ?? null
   const paused = settings.data ? !settings.data.orders_open : false
-  const title =
-    location.pathname === '/admin'
-      ? t('admin.title')
-      : location.pathname.startsWith('/admin/menu')
-        ? t('admin.menu')
-        : location.pathname.startsWith('/admin/qr')
-          ? t('admin.qr')
-          : location.pathname.startsWith('/admin/settings')
-            ? t('admin.settings')
-            : location.pathname.startsWith('/admin/modifiers')
-              ? t('admin.modifiers')
-              : t('admin.title')
+  // None of these paths prefix each other, so the order is only for reading.
+  // The bare /admin board falls through to its own title.
+  const PAGE_TITLES: Array<[path: string, labelKey: string]> = [
+    ['/admin/modifiers', 'admin.modifiers'],
+    ['/admin/ingredients', 'admin.ingredients'],
+    ['/admin/settings', 'admin.settings'],
+    ['/admin/menu', 'admin.menu'],
+    ['/admin/qr', 'admin.qr'],
+  ]
+  const titleKey = PAGE_TITLES.find(([path]) => location.pathname.startsWith(path))?.[1] ?? 'admin.title'
+  const title = t(titleKey)
 
   const togglePause = async () => {
     const backend = await getBackend()

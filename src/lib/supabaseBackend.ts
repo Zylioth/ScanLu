@@ -379,6 +379,63 @@ export const supabaseBackend: Backend = {
     if (error) rpcError(error)
   },
 
+  async saveIngredient(ingredient) {
+    const c = sb()
+    // A corrected stock level is still a stock movement. Read the old value
+    // first so the difference can be logged instead of teleporting the number.
+    const { data: before } = await c
+      .from('ingredients')
+      .select('stock_qty')
+      .eq('id', ingredient.id)
+      .maybeSingle()
+    const { error } = await c.from('ingredients').upsert({
+      id: ingredient.id,
+      name: ingredient.name,
+      unit: ingredient.unit,
+      stock_qty: ingredient.stock_qty,
+      full_level: ingredient.full_level,
+      low_stock_threshold: ingredient.low_stock_threshold,
+      is_active: ingredient.is_active,
+    })
+    if (error) rpcError(error)
+    const previous = before ? Number((before as { stock_qty: number }).stock_qty) : 0
+    const delta = Math.round((ingredient.stock_qty - previous) * 1000) / 1000
+    if (delta !== 0) {
+      const { error: moveError } = await c
+        .from('inventory_movements')
+        .insert({ ingredient_id: ingredient.id, delta, reason: 'adjustment' })
+      if (moveError) rpcError(moveError)
+    }
+  },
+
+  async deleteIngredient(id) {
+    const { error } = await sb().from('ingredients').delete().eq('id', id)
+    if (error) rpcError(error)
+  },
+
+  async restockIngredient(id) {
+    const c = sb()
+    const { data, error } = await c
+      .from('ingredients')
+      .select('stock_qty, full_level')
+      .eq('id', id)
+      .single()
+    if (error) rpcError(error)
+    const row = data as { stock_qty: number; full_level: number }
+    const delta = Math.round((Number(row.full_level) - Number(row.stock_qty)) * 1000) / 1000
+    const { error: updateError } = await c
+      .from('ingredients')
+      .update({ stock_qty: row.full_level })
+      .eq('id', id)
+    if (updateError) rpcError(updateError)
+    if (delta !== 0) {
+      const { error: moveError } = await c
+        .from('inventory_movements')
+        .insert({ ingredient_id: id, delta, reason: 'restock' })
+      if (moveError) rpcError(moveError)
+    }
+  },
+
   async saveMenuItem(item) {
     // Recipe lines live in their own table, so they are stripped from the row
     // and rewritten separately.

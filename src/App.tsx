@@ -21,6 +21,9 @@ const AdminSettingsPage = lazy(() =>
 const AdminModifiersPage = lazy(() =>
   import('./pages/admin/AdminModifiers').then((m) => ({ default: m.AdminModifiers })),
 )
+const AdminIngredientsPage = lazy(() =>
+  import('./pages/admin/AdminIngredients').then((m) => ({ default: m.AdminIngredients })),
+)
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -74,6 +77,7 @@ export default function App() {
                 <Route path="qr" element={<AdminQrPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="modifiers" element={<AdminModifiersPage />} />
+                <Route path="ingredients" element={<AdminIngredientsPage />} />
               </Route>
             </Route>
 

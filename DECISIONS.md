@@ -56,6 +56,13 @@ carries `price_delta = 1` from the seed. The editor has no price field, so the
 value is carried through on save rather than written as zero; otherwise renaming
 an option would silently drop its charge.
 
+**Stock changes are logged, not just written.** Editing an ingredient's stock
+level writes an `adjustment` movement for the difference, and "Fill" writes a
+`restock` movement up to the full level. Otherwise the movement table would say
+stock appeared from nowhere, and stock levels are the one number a host has to be
+able to trust after a busy night. Deleting an ingredient relies on the foreign
+keys: recipe lines cascade away, and options that used it are set to null.
+
 **One realtime channel is shared by every query hook.** `realtime-js` returns the
 existing channel when the topic matches, so the second `useQuery` to subscribe was
 thrown by `.on()` ("cannot add postgres_changes callbacks after subscribe()") and

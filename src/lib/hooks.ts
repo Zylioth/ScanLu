@@ -3,6 +3,7 @@ import { getBackend } from './backend'
 import type {
   Backend,
   Category,
+  Ingredient,
   MenuItemView,
   ModifierGroup,
   Order,
@@ -106,6 +107,10 @@ export function useAdminOrders() {
 
 export function useSettings() {
   return useBackendQuery<Settings>(async (backend) => backend.getSettings(), [])
+}
+
+export function useIngredients() {
+  return useBackendQuery<Ingredient[]>(async (backend) => backend.getIngredients(), [])
 }
 
 /** Re-render on an interval so relative timers (age, ETA) stay honest. */

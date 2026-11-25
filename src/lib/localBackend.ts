@@ -576,6 +576,32 @@ export const localBackend: Backend = {
     return readDb().ingredients
   },
 
+  async saveIngredient(ingredient) {
+    const db = readDb()
+    const idx = db.ingredients.findIndex((i) => i.id === ingredient.id)
+    if (idx >= 0) db.ingredients[idx] = ingredient
+    else db.ingredients.push(ingredient)
+    writeDb(db)
+  },
+
+  async deleteIngredient(id) {
+    const db = readDb()
+    db.ingredients = db.ingredients.filter((i) => i.id !== id)
+    // Same effect as the foreign key cascade in Postgres.
+    for (const item of db.items) {
+      item.recipe = item.recipe.filter((line) => line.ingredient_id !== id)
+    }
+    writeDb(db)
+  },
+
+  async restockIngredient(id) {
+    const db = readDb()
+    const ingredient = db.ingredients.find((i) => i.id === id)
+    if (!ingredient) return
+    ingredient.stock_qty = ingredient.full_level
+    writeDb(db)
+  },
+
   async saveModifierGroup(group) {
     const db = readDb()
     const idx = db.groups.findIndex((g) => g.id === group.id)

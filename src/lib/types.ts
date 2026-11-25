@@ -259,6 +259,14 @@ export interface Backend {
    */
   clearTodayOrders(confirm: string): Promise<{ deleted: number }>
   getIngredients(): Promise<Ingredient[]>
+  /**
+   * Admin only. Upserts an ingredient. A changed stock level is logged as an
+   * adjustment movement, so the movement log still explains every gram.
+   */
+  saveIngredient(ingredient: Ingredient): Promise<void>
+  deleteIngredient(id: string): Promise<void>
+  /** Admin only. Fills the ingredient to its full level and logs a restock. */
+  restockIngredient(id: string): Promise<void>
   saveMenuItem(item: MenuItem): Promise<MenuItem>
   deleteMenuItem(id: string): Promise<void>
   uploadMenuImage(itemId: string, file: File): Promise<string>
