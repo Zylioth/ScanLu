@@ -52,8 +52,9 @@ export interface ModifierOption {
   name_en: string
   name_ms: string
   price_delta: number
-  ingredient_id?: string
-  ingredient_qty?: number
+  /** Null when the option does not consume stock. The column is nullable. */
+  ingredient_id?: string | null
+  ingredient_qty?: number | null
 }
 
 export interface ModifierGroup {
@@ -63,6 +64,30 @@ export interface ModifierGroup {
   min_select: number
   max_select: number
   options: ModifierOption[]
+}
+
+/** What the admin editor writes. Options are saved as their own rows. */
+export interface ModifierGroupInput {
+  id: string
+  name_en: string
+  name_ms: string
+  min_select: number
+  max_select: number
+}
+
+export interface ModifierOptionInput {
+  id: string
+  group_id: string
+  name_en: string
+  name_ms: string
+  /**
+   * Not editable from the admin screen yet, but carried through on save so an
+   * existing upcharge such as oat milk's is never silently dropped.
+   */
+  price_delta: number
+  /** Optional: choosing this option then uses up an ingredient. */
+  ingredient_id: string | null
+  ingredient_qty: number | null
 }
 
 export interface RecipeLine {
@@ -237,6 +262,14 @@ export interface Backend {
   saveMenuItem(item: MenuItem): Promise<MenuItem>
   deleteMenuItem(id: string): Promise<void>
   uploadMenuImage(itemId: string, file: File): Promise<string>
+  /**
+   * Admin only. Modifier groups are edited one row at a time rather than saved
+   * as a whole, so an option that a guest is already looking at keeps its id.
+   */
+  saveModifierGroup(group: ModifierGroupInput): Promise<void>
+  deleteModifierGroup(id: string): Promise<void>
+  saveModifierOption(option: ModifierOptionInput): Promise<void>
+  deleteModifierOption(id: string): Promise<void>
   subscribe(listener: () => void): () => void
   signInAdmin(secret: string): Promise<boolean>
   signOutAdmin(): Promise<void>

@@ -45,6 +45,17 @@ arrow, so every keystroke in the drink editor ran the cleanup and took focus
 away, which made the form type one character per click. The callback now lives
 in a ref and the effect depends on `open` alone.
 
+**Modifier options are saved one row at a time.** Saving a whole group would mean
+delete and re-insert its options, which gives every option a new id. A guest with
+the item sheet already open would then send ids the server no longer knows, and
+`place_order` quietly drops unknown ones, so their "oat milk" would vanish from
+the order. Each option is upserted on its own instead.
+
+**The admin does not show a price upcharge, but it preserves one.** Oat milk
+carries `price_delta = 1` from the seed. The editor has no price field, so the
+value is carried through on save rather than written as zero; otherwise renaming
+an option would silently drop its charge.
+
 **One realtime channel is shared by every query hook.** `realtime-js` returns the
 existing channel when the topic matches, so the second `useQuery` to subscribe was
 thrown by `.on()` ("cannot add postgres_changes callbacks after subscribe()") and

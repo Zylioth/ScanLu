@@ -576,7 +576,53 @@ export const localBackend: Backend = {
     return readDb().ingredients
   },
 
-  async saveMenuItem(item) {    const db = readDb()
+  async saveModifierGroup(group) {
+    const db = readDb()
+    const idx = db.groups.findIndex((g) => g.id === group.id)
+    if (idx >= 0) {
+      db.groups[idx] = { ...db.groups[idx], ...group }
+    } else {
+      db.groups.push({ ...group, options: [] })
+    }
+    writeDb(db)
+  },
+
+  async deleteModifierGroup(id) {
+    const db = readDb()
+    db.groups = db.groups.filter((g) => g.id !== id)
+    // A drink pointing at a group that no longer exists would just ignore it,
+    // but leaving the id behind is untidy and confuses the next person.
+    for (const item of db.items) {
+      if (item.modifier_group_ids.includes(id)) {
+        item.modifier_group_ids = item.modifier_group_ids.filter((g) => g !== id)
+      }
+    }
+    writeDb(db)
+  },
+
+  async saveModifierOption(option) {
+    const db = readDb()
+    const group = db.groups.find((g) => g.id === option.group_id)
+    if (!group) throw new OrderError('NOT_ALLOWED')
+    const idx = group.options.findIndex((o) => o.id === option.id)
+    if (idx >= 0) {
+      group.options[idx] = { ...group.options[idx], ...option }
+    } else {
+      group.options.push({ ...option })
+    }
+    writeDb(db)
+  },
+
+  async deleteModifierOption(id) {
+    const db = readDb()
+    for (const group of db.groups) {
+      group.options = group.options.filter((o) => o.id !== id)
+    }
+    writeDb(db)
+  },
+
+  async saveMenuItem(item) {
+    const db = readDb()
     const idx = db.items.findIndex((i) => i.id === item.id)
     if (idx >= 0) db.items[idx] = item
     else db.items.push(item)

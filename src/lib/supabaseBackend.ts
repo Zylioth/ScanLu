@@ -165,8 +165,8 @@ export const supabaseBackend: Backend = {
       c.from('categories').select('*').eq('is_active', true).order('sort_order'),
       // menu_items_full adds the recipe jsonb array the UI expects.
       c.from('menu_items_full').select('*').eq('is_active', true).order('sort_order'),
-      c.from('modifier_groups').select('*'),
-      c.from('modifier_options').select('*'),
+      c.from('modifier_groups').select('*').order('created_at'),
+      c.from('modifier_options').select('*').order('created_at'),
       c.from('menu_availability').select('*'),
     ])
     if (items.error) rpcError(items.error)
@@ -324,6 +324,59 @@ export const supabaseBackend: Backend = {
     const { data, error } = await sb().from('ingredients').select('*').order('name')
     if (error) rpcError(error)
     return (data as Ingredient[]) ?? []
+  },
+
+  async saveModifierGroup(group) {
+    const { error } = await sb()
+      .from('modifier_groups')
+      .upsert({
+        id: group.id,
+        name_en: group.name_en,
+        name_ms: group.name_ms,
+        min_select: group.min_select,
+        max_select: group.max_select,
+      })
+    if (error) rpcError(error)
+  },
+
+  async deleteModifierGroup(id) {
+    const c = sb()
+    // Drinks point at groups by id, so the ids have to come out of them too.
+    const { data: affected } = await c
+      .from('menu_items')
+      .select('id, modifier_group_ids')
+      .contains('modifier_group_ids', [id])
+    const { error } = await c.from('modifier_groups').delete().eq('id', id)
+    if (error) rpcError(error)
+    for (const row of (affected ?? []) as { id: string; modifier_group_ids: string[] }[]) {
+      const { error: updateError } = await c
+        .from('menu_items')
+        .update({ modifier_group_ids: row.modifier_group_ids.filter((g) => g !== id) })
+        .eq('id', row.id)
+      if (updateError) rpcError(updateError)
+    }
+  },
+
+  async saveModifierOption(option) {
+    const { error } = await sb()
+      .from('modifier_options')
+      .upsert({
+        id: option.id,
+        group_id: option.group_id,
+        name_en: option.name_en,
+        name_ms: option.name_ms,
+        // The admin screen does not expose an upcharge, but it is carried
+        // through so an existing one is not wiped by an unrelated edit.
+        price_delta: option.price_delta,
+        ingredient_id: option.ingredient_id,
+        ingredient_qty: option.ingredient_qty,
+      })
+    if (error) rpcError(error)
+  },
+
+  async deleteModifierOption(id) {
+    const { error } = await sb().from('modifier_options').delete().eq('id', id)
+    if (error) rpcError(error)
   },
 
   async saveMenuItem(item) {
