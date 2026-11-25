@@ -41,6 +41,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    watch: {
+      // The browser checks put Chrome profiles in .tmp, and their SQLite files
+      // are locked while Chrome runs. Watching them floods the terminal with
+      // EBUSY errors, so keep the watcher out of test and build output.
+      ignored: ['**/.tmp/**', '**/dist/**', '**/screenshots/**'],
+    },
+  },
   build: {
     rollupOptions: {
       output: {
