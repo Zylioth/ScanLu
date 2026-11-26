@@ -28,7 +28,7 @@ export function LanguageToggle({ className }: { className?: string }) {
               }
             }}
             className={cx(
-              'min-h-9 rounded-full px-2.5 text-xs font-semibold transition-colors',
+              'min-h-11 min-w-11 rounded-full px-2.5 text-xs font-semibold transition-colors',
               active ? 'bg-brand-700 text-cream-50' : 'text-ink-muted hover:text-ink',
             )}
           >

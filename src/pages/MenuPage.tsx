@@ -187,7 +187,9 @@ export function MenuPage() {
                     element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                   }}
                   className={cx(
-                    'min-h-9 shrink-0 rounded-full px-3.5 text-sm font-medium whitespace-nowrap transition-colors',
+                    // 44px tall, not 36: this is the main way to move around the
+                    // menu on a phone, and a thumb is not a cursor.
+                    'min-h-11 shrink-0 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-colors',
                     active
                       ? 'bg-brand-700 text-cream-50'
                       : 'bg-panel text-ink-muted ring-1 ring-hairline hover:text-ink',
