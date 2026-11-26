@@ -10,6 +10,7 @@ import { Banner, Button, Chip, Skeleton, cx } from '../components/ui'
 import { CupArt, ItemSheet } from '../components/ItemSheet'
 import { WelcomeCard } from '../components/WelcomeCard'
 import { LanguageToggle } from '../components/LanguageToggle'
+import { HostNotice } from '../components/HostNotice'
 import { StatusChip } from '../components/StatusChip'
 
 const TINTS = ['#12664A', '#B07A18', '#2F6FB3', '#8A5A3B']
@@ -199,6 +200,8 @@ export function MenuPage() {
           </nav>
         ) : null}
       </header>
+
+      <HostNotice />
 
       {!ordersClosed && status.data?.banner ? (
         <Banner tone="gold" icon={<Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />}>

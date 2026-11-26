@@ -2,6 +2,11 @@
   "app": {
     "tagline": "Scan, order, collect"
   },
+  "hostNotice": {
+    "title": "This device is signed in as the host, so it sees host orders.",
+    "action": "Sign out of host to order as a guest",
+    "leaving": "Signing out"
+  },
   "welcome": {
     "title": "How this works",
     "step1": "Pick your drink",

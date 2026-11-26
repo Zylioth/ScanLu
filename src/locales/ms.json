@@ -2,6 +2,11 @@
   "app": {
     "tagline": "Imbas, pesan, ambil"
   },
+  "hostNotice": {
+    "title": "Peranti ini masuk sebagai tuan rumah, jadi ia nampak pesanan tuan rumah.",
+    "action": "Keluar dari tuan rumah untuk pesan sebagai tetamu",
+    "leaving": "Sedang keluar"
+  },
   "welcome": {
     "title": "Cara ia berfungsi",
     "step1": "Pilih minuman",
