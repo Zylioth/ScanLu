@@ -44,6 +44,10 @@ export interface Ingredient {
   full_level: number
   low_stock_threshold: number
   is_active: boolean
+  /** How much one pack holds, in the base unit. Null means counted in base units. */
+  pack_size?: number | null
+  /** What one pack is called: box, bag, pack, sleeve. */
+  pack_name?: string | null
 }
 
 export interface ModifierOption {
@@ -265,8 +269,11 @@ export interface Backend {
    */
   saveIngredient(ingredient: Ingredient): Promise<void>
   deleteIngredient(id: string): Promise<void>
-  /** Admin only. Fills the ingredient to its full level and logs a restock. */
-  restockIngredient(id: string): Promise<void>
+  /**
+   * Admin only. Adds (or subtracts) stock in base units and logs a movement with
+   * the given reason, so the count always has an explanation behind it.
+   */
+  addIngredientStock(id: string, amount: number, reason: 'restock' | 'adjustment' | 'waste'): Promise<void>
   saveMenuItem(item: MenuItem): Promise<MenuItem>
   deleteMenuItem(id: string): Promise<void>
   /** Admin only. Every item, including the ones switched off, for the menu editor. */

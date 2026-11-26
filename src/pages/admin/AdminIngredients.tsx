@@ -20,11 +20,19 @@ export function AdminIngredients() {
 
   const [draft, setDraft] = useState<Ingredient | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Ingredient | null>(null)
+  const [restockTarget, setRestockTarget] = useState<Ingredient | null>(null)
+  const [restockAmount, setRestockAmount] = useState('1')
   const [busy, setBusy] = useState(false)
 
   const list = ingredients.data ?? []
   const unitLabel = (unit: Unit) =>
     unit === 'g' ? t('ingredients.unitG') : unit === 'ml' ? t('ingredients.unitMl') : t('ingredients.unitPcs')
+
+  // A pack size turns grams into something the host actually buys.
+  const packSize = (ingredient: Ingredient) =>
+    ingredient.pack_size && ingredient.pack_size > 0 ? ingredient.pack_size : null
+  const packName = (ingredient: Ingredient) =>
+    ingredient.pack_name?.trim() || t('ingredients.packFallback')
 
   const save = async () => {
     if (!draft || !draft.name.trim()) return
@@ -48,18 +56,42 @@ export function AdminIngredients() {
     }
   }
 
-  const restock = async (ingredient: Ingredient) => {
+  const openRestock = (ingredient: Ingredient) => {
+    setRestockTarget(ingredient)
+    setRestockAmount('1')
+  }
+
+  const restockBase = (): number => {
+    if (!restockTarget) return 0
+    const qty = Number(restockAmount) || 0
+    const size = packSize(restockTarget)
+    return size ? round(qty * size) : round(qty)
+  }
+
+  const addStock = async () => {
+    if (!restockTarget) return
+    const amount = restockBase()
+    if (amount <= 0) return
     setBusy(true)
     try {
       const backend = await getBackend()
-      await backend.restockIngredient(ingredient.id)
+      await backend.addIngredientStock(restockTarget.id, amount, 'restock')
       ingredients.refresh()
-      showToast({ message: t('ingredients.restocked', { name: ingredient.name }), tone: 'success' })
+      setRestockTarget(null)
+      showToast({ message: t('ingredients.added', { name: restockTarget.name }), tone: 'success' })
     } catch {
       showToast({ message: t('error.generic'), tone: 'danger' })
     } finally {
       setBusy(false)
     }
+  }
+
+  const fillToFull = () => {
+    if (!restockTarget) return
+    const missing = Math.max(0, round(restockTarget.full_level - restockTarget.stock_qty))
+    const size = packSize(restockTarget)
+    // Part packs are allowed, so do not round up to whole boxes.
+    setRestockAmount(String(size ? round(missing / size) : missing))
   }
 
   const remove = async () => {
@@ -130,6 +162,15 @@ export function AdminIngredients() {
                     <p className="tnum text-xs text-ink-muted">
                       {ingredient.stock_qty} / {ingredient.full_level} {unitLabel(ingredient.unit)}
                     </p>
+                    {packSize(ingredient) ? (
+                      <p className="tnum text-xs text-ink-muted">
+                        {t('ingredients.packSizeLine', {
+                          pack: packName(ingredient),
+                          size: packSize(ingredient),
+                          unit: unitLabel(ingredient.unit),
+                        })}
+                      </p>
+                    ) : null}
                   </div>
 
                   {out ? (
@@ -141,8 +182,8 @@ export function AdminIngredients() {
                   <Button
                     size="sm"
                     variant="secondary"
-                    onClick={() => void restock(ingredient)}
-                    disabled={busy || round(ingredient.stock_qty) >= round(ingredient.full_level)}
+                    onClick={() => openRestock(ingredient)}
+                    disabled={busy}
                   >
                     {t('ingredients.restock')}
                   </Button>
@@ -243,6 +284,27 @@ export function AdminIngredients() {
               value={String(draft.low_stock_threshold)}
               onChange={(event) => setDraft({ ...draft, low_stock_threshold: Number(event.target.value) || 0 })}
             />
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label={t('ingredients.packSize')}
+                type="number"
+                min={0}
+                step="any"
+                inputMode="decimal"
+                value={draft.pack_size === null || draft.pack_size === undefined ? '' : String(draft.pack_size)}
+                onChange={(event) =>
+                  setDraft({ ...draft, pack_size: event.target.value === '' ? null : Number(event.target.value) })
+                }
+              />
+              <Field
+                label={t('ingredients.packName')}
+                value={draft.pack_name ?? ''}
+                maxLength={16}
+                placeholder={t('ingredients.packFallback')}
+                onChange={(event) => setDraft({ ...draft, pack_name: event.target.value })}
+              />
+            </div>
+            <p className="text-xs text-ink-muted">{t('ingredients.packHint')}</p>
             <label className="flex items-start gap-2.5">
               <input
                 type="checkbox"
@@ -255,6 +317,60 @@ export function AdminIngredients() {
                 <span className="block text-xs text-ink-muted">{t('ingredients.activeHint')}</span>
               </span>
             </label>
+          </div>
+        ) : null}
+      </Sheet>
+
+      {/* ------------------------------------------------------------ restock */}
+      <Sheet
+        open={Boolean(restockTarget)}
+        onClose={() => setRestockTarget(null)}
+        title={t('ingredients.addStockTitle')}
+        footer={
+          <Button fullWidth size="lg" loading={busy} onClick={() => void addStock()} disabled={restockBase() <= 0}>
+            {t('ingredients.addStockAction')}
+          </Button>
+        }
+      >
+        {restockTarget ? (
+          <div className="space-y-4">
+            <p className="tnum text-sm text-ink">
+              {restockTarget.name} · {restockTarget.stock_qty} {unitLabel(restockTarget.unit)}
+            </p>
+            <Field
+              label={
+                packSize(restockTarget)
+                  ? t('ingredients.addStockPacks')
+                  : t('ingredients.addStockUnits', { unit: unitLabel(restockTarget.unit) })
+              }
+              hint={
+                packSize(restockTarget)
+                  ? t('ingredients.packSizeLine', {
+                      pack: packName(restockTarget),
+                      size: packSize(restockTarget),
+                      unit: unitLabel(restockTarget.unit),
+                    })
+                  : undefined
+              }
+              type="number"
+              min={0}
+              step="any"
+              inputMode="decimal"
+              value={restockAmount}
+              onChange={(event) => setRestockAmount(event.target.value)}
+            />
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="secondary" onClick={fillToFull}>
+                {t('ingredients.fillToFull')}
+              </Button>
+              <p className="tnum text-sm text-ink-muted">
+                {t('ingredients.addStockPreview', {
+                  before: restockTarget.stock_qty,
+                  after: round(restockTarget.stock_qty + restockBase()),
+                  unit: unitLabel(restockTarget.unit),
+                })}
+              </p>
+            </div>
           </div>
         ) : null}
       </Sheet>

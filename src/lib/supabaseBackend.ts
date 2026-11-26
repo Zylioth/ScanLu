@@ -421,6 +421,9 @@ export const supabaseBackend: Backend = {
       full_level: ingredient.full_level,
       low_stock_threshold: ingredient.low_stock_threshold,
       is_active: ingredient.is_active,
+      // Absent columns just stay null, which is the "counted in base units" case.
+      pack_size: ingredient.pack_size ?? null,
+      pack_name: ingredient.pack_name?.trim() || null,
     })
     if (error) rpcError(error)
     const previous = before ? Number((before as { stock_qty: number }).stock_qty) : 0
@@ -438,27 +441,20 @@ export const supabaseBackend: Backend = {
     if (error) rpcError(error)
   },
 
-  async restockIngredient(id) {
+  async addIngredientStock(id, amount, reason) {
     const c = sb()
-    const { data, error } = await c
-      .from('ingredients')
-      .select('stock_qty, full_level')
-      .eq('id', id)
-      .single()
+    const { data, error } = await c.from('ingredients').select('stock_qty').eq('id', id).single()
     if (error) rpcError(error)
-    const row = data as { stock_qty: number; full_level: number }
-    const delta = Math.round((Number(row.full_level) - Number(row.stock_qty)) * 1000) / 1000
-    const { error: updateError } = await c
-      .from('ingredients')
-      .update({ stock_qty: row.full_level })
-      .eq('id', id)
+    const before = Number((data as { stock_qty: number }).stock_qty)
+    const next = Math.max(0, Math.round((before + amount) * 1000) / 1000)
+    const delta = Math.round((next - before) * 1000) / 1000
+    if (delta === 0) return
+    const { error: updateError } = await c.from('ingredients').update({ stock_qty: next }).eq('id', id)
     if (updateError) rpcError(updateError)
-    if (delta !== 0) {
-      const { error: moveError } = await c
-        .from('inventory_movements')
-        .insert({ ingredient_id: id, delta, reason: 'restock' })
-      if (moveError) rpcError(moveError)
-    }
+    const { error: moveError } = await c
+      .from('inventory_movements')
+      .insert({ ingredient_id: id, delta, reason })
+    if (moveError) rpcError(moveError)
   },
 
   async saveMenuItem(item) {

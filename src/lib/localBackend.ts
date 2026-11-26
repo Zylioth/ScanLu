@@ -594,11 +594,11 @@ export const localBackend: Backend = {
     writeDb(db)
   },
 
-  async restockIngredient(id) {
+  async addIngredientStock(id, amount) {
     const db = readDb()
     const ingredient = db.ingredients.find((i) => i.id === id)
     if (!ingredient) return
-    ingredient.stock_qty = ingredient.full_level
+    ingredient.stock_qty = Math.max(0, Math.round((ingredient.stock_qty + amount) * 1000) / 1000)
     writeDb(db)
   },
 
