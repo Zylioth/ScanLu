@@ -8,6 +8,7 @@ import type { MenuItemView } from '../lib/types'
 import { formatMoney } from '../lib/format'
 import { Banner, Button, Chip, Skeleton, cx } from '../components/ui'
 import { CupArt, ItemSheet } from '../components/ItemSheet'
+import { WelcomeCard } from '../components/WelcomeCard'
 import { LanguageToggle } from '../components/LanguageToggle'
 import { StatusChip } from '../components/StatusChip'
 
@@ -371,6 +372,8 @@ export function MenuPage() {
           cart.addLine({ menuItemId: openItem.id, qty, optionIds, unitPrice })
         }}
       />
+
+      <WelcomeCard />
     </div>
   )
 }

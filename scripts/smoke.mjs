@@ -45,6 +45,15 @@ const context = await browser.newContext({
   locale: 'en-GB',
 })
 const page = await context.newPage()
+// The guest menu greets a first-time visitor with a welcome card. These flows
+// test the menu behind it, so mark the device as already welcomed.
+await context.addInitScript(() => {
+  try {
+    localStorage.setItem('ohpos.welcome.seen', 'true')
+  } catch {
+    /* ignore */
+  }
+})
 
 page.on('console', (message) => {
   if (message.type() !== 'error') return

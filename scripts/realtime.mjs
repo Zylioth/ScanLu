@@ -22,6 +22,14 @@ const browser = await chromium.launch({ channel: 'chrome', headless: true })
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' })
 const guest = await context.newPage()
 const admin = await context.newPage()
+// Skip the first-visit welcome card so it does not sit over the menu flows.
+await context.addInitScript(() => {
+  try {
+    localStorage.setItem('ohpos.welcome.seen', 'true')
+  } catch {
+    /* ignore */
+  }
+})
 
 for (const [name, page] of [
   ['guest', guest],

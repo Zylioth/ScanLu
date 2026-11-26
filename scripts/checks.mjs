@@ -17,6 +17,14 @@ const log = (message) => console.log(`  ${message}`)
 const browser = await chromium.launch({ channel: 'chrome', headless: true })
 const context = await browser.newContext({ viewport: { width: 1180, height: 820 }, locale: 'en-GB' })
 const page = await context.newPage()
+// The first-visit welcome card would sit over the menu this script drives.
+await context.addInitScript(() => {
+  try {
+    localStorage.setItem('ohpos.welcome.seen', 'true')
+  } catch {
+    /* ignore */
+  }
+})
 page.on('console', (message) => {
   if (message.type() !== 'error') return
   const text = message.text()

@@ -2,6 +2,16 @@
   "app": {
     "tagline": "Imbas, pesan, ambil"
   },
+  "welcome": {
+    "title": "Cara ia berfungsi",
+    "step1": "Pilih minuman",
+    "step1Body": "Pilih pilihan anda, kemudian tambah ke pesanan.",
+    "step2": "Beritahu nama anda",
+    "step2Body": "Kami panggil nombor anda bila ia siap.",
+    "step3": "Biarkan halaman ini terbuka",
+    "step3Body": "Telefon anda berbunyi bila minuman siap. Tidak perlu muat semula.",
+    "gotIt": "Faham, mari pesan"
+  },
   "menu": {
     "title": "Menu",
     "viewOrder": "Lihat pesanan",

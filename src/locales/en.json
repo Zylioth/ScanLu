@@ -2,6 +2,16 @@
   "app": {
     "tagline": "Scan, order, collect"
   },
+  "welcome": {
+    "title": "How this works",
+    "step1": "Pick your drink",
+    "step1Body": "Choose your options, then add it to your order.",
+    "step2": "Tell us your name",
+    "step2Body": "We call your number when it is ready.",
+    "step3": "Keep this page open",
+    "step3Body": "Your phone rings when your drink is done. No need to refresh.",
+    "gotIt": "Got it, let me order"
+  },
   "menu": {
     "title": "Menu",
     "viewOrder": "View order",
