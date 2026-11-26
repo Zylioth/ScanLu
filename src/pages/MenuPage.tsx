@@ -55,7 +55,7 @@ function MenuItemCard({
           blocked ? 'border-dashed' : 'hover:border-brand-500/50 hover:bg-panel-2/50',
         )}
       >
-        <div className="size-20 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-panel-2">
+        <div className="size-16 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-panel-2">
           {item.image_url ? (
             <img
               src={item.image_url}
@@ -85,7 +85,10 @@ function MenuItemCard({
               </Chip>
             )}
           </div>
-          <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-ink-muted">{description}</p>
+          {/* One line here, the full text lives in the sheet: the list is for
+              choosing, not reading, and two lines made every card taller than
+              the drink name needed. */}
+          <p className="mt-0.5 line-clamp-1 text-xs leading-snug text-ink-muted">{description}</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {soldOut ? <Chip tone="muted">{t('menu.soldOut')}</Chip> : null}
             {lowStock && !soldOut ? (
@@ -168,7 +171,7 @@ export function MenuPage() {
             <h1 className="truncate font-display text-xl leading-tight font-semibold text-ink">
               {status.data?.event_name ?? t('menu.title')}
             </h1>
-            <p className="text-xs text-ink-muted">{t('app.tagline')}</p>
+            <p className="hidden text-xs text-ink-muted min-[400px]:block">{t('app.tagline')}</p>
           </div>
           <LanguageToggle />
         </div>
@@ -211,7 +214,7 @@ export function MenuPage() {
         </Banner>
       ) : null}
 
-      <main className="mx-auto w-full max-w-2xl px-4 pt-4">
+      <main className="mx-auto w-full max-w-2xl px-4 pt-4 md:max-w-3xl">
         {primaryActive ? (
           <Link
             to={`/ticket/${primaryActive.id}`}
@@ -307,7 +310,9 @@ export function MenuPage() {
                   <h2 className="mb-2.5 text-base font-semibold text-ink">
                     {i18n.language === 'ms' ? category.name_ms : category.name_en}
                   </h2>
-                  <div className="space-y-2.5">
+                  {/* Two columns only when there is room for two readable cards;
+                      below that this is one full width stack. */}
+                  <div className="grid gap-2.5 md:grid-cols-2">
                     {categoryItems.map((item, index) => (
                       <MenuItemCard
                         key={item.id}
@@ -329,7 +334,7 @@ export function MenuPage() {
       </main>
 
       {ordersClosed ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-2xl px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        <div className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-2xl px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:max-w-3xl">
           <div className="flex items-center gap-2.5 rounded-[var(--radius-lg)] bg-brand-900 px-4 py-3 text-cream-50 shadow-[var(--shadow-lift)]">
             <PauseCircle className="size-5 shrink-0 text-gold-300" aria-hidden="true" />
             <div className="min-w-0">
@@ -342,7 +347,7 @@ export function MenuPage() {
         </div>
       ) : cups > 0 ? (
         <div
-          className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-2xl px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
+          className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-2xl px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:max-w-3xl"
           style={{ animation: 'ticket-in 320ms var(--ease-spring) both' }}
         >
           <button
