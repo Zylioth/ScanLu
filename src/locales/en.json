@@ -182,6 +182,8 @@
     "saved": "Settings saved",
     "close": "Close",
     "preview": "What guests see",
+    "limitsTitle": "Limits",
+    "limitsHint": "Each guest is one browser. Clear cookies or use private mode and that device gets a fresh allowance, so these stop casual over-ordering rather than determined abuse.",
     "dangerTitle": "Start over",
     "clearToday": "Clear today's orders",
     "clearTodayHint": "Deletes today's orders, puts their stock back, and restarts today's numbering at A-001. Earlier days stay untouched. This cannot be undone.",

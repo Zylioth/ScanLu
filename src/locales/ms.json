@@ -182,6 +182,8 @@
     "saved": "Tetapan disimpan",
     "close": "Tutup",
     "preview": "Paparan untuk tetamu",
+    "limitsTitle": "Had",
+    "limitsHint": "Setiap tetamu ialah satu pelayar. Padam kuki atau guna mod peribadi dan peranti itu dapat jatah baharu, jadi had ini menghalang pesanan berlebihan biasa, bukan penyalahgunaan berterusan.",
     "dangerTitle": "Mula semula",
     "clearToday": "Kosongkan pesanan hari ini",
     "clearTodayHint": "Padam pesanan hari ini, pulangkan stoknya, dan mula semula nombor hari ini dari A-001. Hari sebelumnya tidak disentuh. Ini tidak boleh dibatalkan.",
