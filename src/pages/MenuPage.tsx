@@ -35,7 +35,6 @@ function MenuItemCard({
   const { t, i18n } = useTranslation()
   const language = i18n.language
   const name = language === 'ms' ? item.name_ms : item.name_en
-  const description = language === 'ms' ? item.description_ms : item.description_en
   const soldOut = item.available_units !== null && item.available_units <= 0
   const lowStock = item.available_units !== null && item.available_units > 0 && item.available_units <= 3
   const limitReached = remainingCups !== null && remainingCups <= 0
@@ -55,7 +54,7 @@ function MenuItemCard({
           blocked ? 'border-dashed' : 'hover:border-brand-500/50 hover:bg-panel-2/50',
         )}
       >
-        <div className="size-16 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-panel-2">
+        <div className="size-14 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-panel-2">
           {item.image_url ? (
             <img
               src={item.image_url}
@@ -85,19 +84,20 @@ function MenuItemCard({
               </Chip>
             )}
           </div>
-          {/* One line here, the full text lives in the sheet: the list is for
-              choosing, not reading, and two lines made every card taller than
-              the drink name needed. */}
-          <p className="mt-0.5 line-clamp-1 text-xs leading-snug text-ink-muted">{description}</p>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {soldOut ? <Chip tone="muted">{t('menu.soldOut')}</Chip> : null}
-            {lowStock && !soldOut ? (
-              <Chip tone="warning">{t('menu.onlyLeft', { count: item.available_units })}</Chip>
-            ) : null}
-            {limitReached && !soldOut ? (
-              <Chip tone="info">{t('cart.limitPerOrder', { count: maxPerOrder })}</Chip>
-            ) : null}
-          </div>
+          {/* No description here on purpose: the list is for choosing quickly, and
+              the full text is one tap away in the sheet that opens to order. The
+              chip row only exists when there is something to say. */}
+          {soldOut || lowStock || limitReached ? (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {soldOut ? <Chip tone="muted">{t('menu.soldOut')}</Chip> : null}
+              {lowStock && !soldOut ? (
+                <Chip tone="warning">{t('menu.onlyLeft', { count: item.available_units })}</Chip>
+              ) : null}
+              {limitReached && !soldOut ? (
+                <Chip tone="info">{t('cart.limitPerOrder', { count: maxPerOrder })}</Chip>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </button>
       {!blocked ? (
