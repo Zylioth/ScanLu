@@ -65,6 +65,8 @@ export function AdminMenu() {
   // should be removed. Neither is applied until Save.
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null)
   const [photoCleared, setPhotoCleared] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [ingredientError, setIngredientError] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const lastFile = useRef<File | null>(null)
 
@@ -86,11 +88,18 @@ export function AdminMenu() {
   const [ingredientList, setIngredientList] = useState<Array<{ id: string; name: string; unit: string }>>([])
   useEffect(() => {
     void (async () => {
-      const backend = await getBackend()
-      const list = await backend.getIngredients()
-      setIngredientList(list.map((i) => ({ id: i.id, name: i.name, unit: i.unit })))
+      try {
+        const backend = await getBackend()
+        const list = await backend.getIngredients()
+        setIngredientList(list.map((i) => ({ id: i.id, name: i.name, unit: i.unit })))
+      } catch {
+        // Previously this failed silently and the recipe control just looked empty.
+        setIngredientError(true)
+      }
     })()
   }, [])
+
+  const groups = menu.data?.groups ?? []
 
   const openNew = () => {
     const firstCategory = categories[0]?.id ?? ''
@@ -115,6 +124,7 @@ export function AdminMenu() {
     setPhotoError(null)
     setPhotoBlob(null)
     setPhotoCleared(false)
+    setPickerOpen(false)
   }
 
   const applyFile = async (file: File, zoomValue: number) => {
@@ -228,6 +238,7 @@ export function AdminMenu() {
                       setPhotoError(null)
                       setPhotoBlob(null)
                       setPhotoCleared(false)
+                      setPickerOpen(false)
                     }}
                     className="min-h-10 rounded-full border border-hairline px-3 text-sm font-medium text-ink hover:bg-ink/5"
                   >
@@ -411,6 +422,51 @@ export function AdminMenu() {
               </label>
             </div>
 
+            {/* Which option groups this drink offers. Without this the Options
+                screen had no way to reach a drink at all. */}
+            <div>
+              <p className="text-sm font-medium text-ink">{t('menuAdmin.options')}</p>
+              <p className="mb-2 text-xs text-ink-muted">{t('menuAdmin.optionsHint')}</p>
+              {groups.length === 0 ? (
+                <p className="rounded-[var(--radius-sm)] border border-dashed border-hairline px-3 py-4 text-center text-sm text-ink-muted">
+                  {t('menuAdmin.noGroups')}
+                </p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {groups.map((group) => {
+                    const checked = draft.modifier_group_ids.includes(group.id)
+                    const summary = group.options.map((option) => option.name_en).join(', ')
+                    return (
+                      <li key={group.id}>
+                        <label className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] bg-panel-2 px-3 py-2 text-ink">
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium">{group.name_en}</span>
+                            <span className="block truncate text-xs text-ink-muted">
+                              {summary || t('menuAdmin.noOptions')}
+                            </span>
+                          </span>
+                          <input
+                            type="checkbox"
+                            aria-label={group.name_en}
+                            checked={checked}
+                            onChange={(event) =>
+                              setDraft({
+                                ...draft,
+                                modifier_group_ids: event.target.checked
+                                  ? [...draft.modifier_group_ids, group.id]
+                                  : draft.modifier_group_ids.filter((id) => id !== group.id),
+                              })
+                            }
+                            className="size-5 shrink-0 accent-[var(--color-brand-700)]"
+                          />
+                        </label>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </div>
+
             <div>
               <p className="text-sm font-medium text-ink">{t('menuAdmin.recipe')}</p>
               <p className="mb-2 text-xs text-ink-muted">{t('menuAdmin.recipeHint')}</p>
@@ -452,28 +508,51 @@ export function AdminMenu() {
                   )
                 })}
               </ul>
-              <select
-                aria-label={t('menuAdmin.ingredient')}
-                value=""
-                onChange={(event) => {
-                  const ingredientId = event.target.value
-                  if (!ingredientId) return
-                  setDraft({
-                    ...draft,
-                    recipe: [...draft.recipe, { ingredient_id: ingredientId, qty: 1 }],
-                  })
-                }}
-                className="mt-2 h-11 w-full rounded-[var(--radius-sm)] border border-hairline bg-panel px-3 text-sm text-ink"
+
+              <Button
+                size="sm"
+                variant="secondary"
+                className="mt-2"
+                aria-expanded={pickerOpen}
+                onClick={() => setPickerOpen((open) => !open)}
+                disabled={ingredientError || ingredientList.length === 0}
               >
-                <option value="">{t('menuAdmin.ingredient')}…</option>
-                {ingredientList
-                  .filter((ingredient) => !draft.recipe.some((line) => line.ingredient_id === ingredient.id))
-                  .map((ingredient) => (
-                    <option key={ingredient.id} value={ingredient.id}>
-                      {ingredient.name}
-                    </option>
-                  ))}
-              </select>
+                <Plus className="size-4" aria-hidden="true" />
+                {t('menuAdmin.addIngredient')}
+              </Button>
+
+              {/* A flat dropdown here was invisible when the list failed to load. */}
+              {ingredientError ? (
+                <p className="mt-1 text-xs font-medium text-danger">{t('menuAdmin.recipeLoadFailed')}</p>
+              ) : null}
+
+              {pickerOpen ? (
+                <ul className="mt-2 max-h-56 overflow-y-auto rounded-[var(--radius-sm)] border border-hairline">
+                  {draft.recipe.length >= ingredientList.length ? (
+                    <li className="px-3 py-3 text-sm text-ink-muted">{t('menuAdmin.recipeEmpty')}</li>
+                  ) : null}
+                  {ingredientList
+                    .filter((ingredient) => !draft.recipe.some((line) => line.ingredient_id === ingredient.id))
+                    .map((ingredient) => (
+                      <li key={ingredient.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDraft({
+                              ...draft,
+                              recipe: [...draft.recipe, { ingredient_id: ingredient.id, qty: 1 }],
+                            })
+                            setPickerOpen(false)
+                          }}
+                          className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm text-ink hover:bg-ink/5"
+                        >
+                          <span className="truncate">{ingredient.name}</span>
+                          <span className="text-xs text-ink-muted">{ingredient.unit}</span>
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              ) : null}
             </div>
 
             <div className="flex items-center justify-between gap-3">
