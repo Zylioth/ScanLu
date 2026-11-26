@@ -55,8 +55,13 @@ export function AdminLogin() {
           <Field
             label={t('admin.passcode')}
             type="password"
-            inputMode="numeric"
+            // Demo mode takes a numeric passcode, but a live install takes the
+            // admin's real password, and a number pad makes that impossible.
+            inputMode={isDemoMode ? 'numeric' : 'text'}
             autoComplete="current-password"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             value={secret}
             onChange={(event) => setSecret(event.target.value)}
             error={error ?? undefined}

@@ -8,6 +8,30 @@
 let ctx: AudioContext | null = null
 let unlocked = false
 
+const MUTE_KEY = 'ohpos.audio.muted'
+let muted: boolean | null = null
+
+/** Whether sound has been deliberately switched off on this device. */
+export function isAudioMuted(): boolean {
+  if (muted === null) {
+    try {
+      muted = localStorage.getItem(MUTE_KEY) === 'true'
+    } catch {
+      muted = false
+    }
+  }
+  return muted
+}
+
+export function setAudioMuted(next: boolean): void {
+  muted = next
+  try {
+    localStorage.setItem(MUTE_KEY, String(next))
+  } catch {
+    /* private mode: the toggle still works for this visit */
+  }
+}
+
 function audioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null
   if (!ctx) {
@@ -78,14 +102,14 @@ function bell(at: number, freq: number, duration: number, peak: number) {
 
 /** ~1.5 s warm bell. */
 export function playGuestChime(): void {
-  if (!isAudioUnlocked()) return
+  if (!isAudioUnlocked() || isAudioMuted()) return
   bell(0, 880, 1.5, 0.22)
   bell(0.16, 1318.5, 1.2, 0.1)
 }
 
 /** Short two-tone "ding-ding" for a new order on the iPad. */
 export function playAdminChime(): void {
-  if (!isAudioUnlocked()) return
+  if (!isAudioUnlocked() || isAudioMuted()) return
   bell(0, 660, 0.32, 0.16)
   bell(0.14, 990, 0.4, 0.14)
 }

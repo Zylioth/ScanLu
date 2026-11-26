@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { getBackend, isDemoMode } from '../lib/backend'
 import { useAdminOrders, useNow, useSettings } from '../lib/hooks'
-import { isAudioUnlocked, playAdminChime, unlockAudio } from '../lib/audio'
+import { isAudioMuted, isAudioUnlocked, playAdminChime, setAudioMuted, unlockAudio } from '../lib/audio'
 import { useTheme } from '../lib/theme'
 import { Chip, Skeleton, cx } from '../components/ui'
 
@@ -77,6 +77,7 @@ export function AdminShell() {
   const now = useNow(5000)
   const [theme, setTheme] = useTheme()
   const [audioOn, setAudioOn] = useState(() => isAudioUnlocked())
+  const [muted, setMuted] = useState(() => isAudioMuted())
   const [online, setOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true))
 
   useEffect(() => {
@@ -231,15 +232,30 @@ export function AdminShell() {
               <button
                 type="button"
                 onClick={() => {
-                  void unlockAudio().then((ok) => {
-                    setAudioOn(ok)
-                    if (ok) playAdminChime()
-                  })
+                  const next = !muted
+                  setAudioMuted(next)
+                  setMuted(next)
+                  // Unmuting is also the chance to prove the sound works.
+                  if (!next) {
+                    void unlockAudio().then((ok) => {
+                      setAudioOn(ok)
+                      if (ok) playAdminChime()
+                    })
+                  }
                 }}
-                aria-label={t('admin.soundOn')}
-                className="grid size-9 place-items-center rounded-full text-brand-700 hover:bg-ink/6"
+                aria-pressed={muted}
+                aria-label={muted ? t('admin.soundOff') : t('admin.soundOn')}
+                title={muted ? t('admin.soundOff') : t('admin.soundOn')}
+                className={cx(
+                  'grid size-9 place-items-center rounded-full hover:bg-ink/6',
+                  muted ? 'text-ink-muted' : 'text-brand-700',
+                )}
               >
-                <BellRing className="size-5" aria-hidden="true" />
+                {muted ? (
+                  <BellOff className="size-5" aria-hidden="true" />
+                ) : (
+                  <BellRing className="size-5" aria-hidden="true" />
+                )}
               </button>
             )}
 

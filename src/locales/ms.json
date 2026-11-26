@@ -132,6 +132,7 @@
     "emptyColumn": "Tiada apa-apa",
     "emptyBoard": "Belum ada pesanan. Nikmati suasana.",
     "recent": "Baru-baru ini",
+    "recentTruncated": "Menunjukkan 10 terakhir daripada {{count}}. Yang lebih awal masih dikira dalam Angka.",
     "undo": "Undur",
     "undoDone": "Dikembalikan",
     "statusChanged": "{{number}} → {{status}}",
@@ -314,8 +315,8 @@
     "footer": "Percuma untuk semua tetamu",
     "size": "Saiz cetakan",
     "print": "Cetak",
-    "downloadPng": "Muat turun PNG",
-    "downloadSvg": "Muat turun SVG",
+    "downloadCard": "Muat turun kad",
+    "downloadQr": "QR sahaja",
     "preview": "Pratonton",
     "urlMissing": "Tetapkan VITE_PUBLIC_APP_URL supaya QR menuju ke alamat sebenar.",
     "currentUrl": "QR ini menuju ke {{url}}"

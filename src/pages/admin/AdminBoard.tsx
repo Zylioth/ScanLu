@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BellRing, Clock, Coffee, Hand, Receipt, Trash2, Undo2 } from 'lucide-react'
+import { BellRing, ChevronDown, ChevronRight, Clock, Coffee, Hand, Receipt, Trash2, Undo2 } from 'lucide-react'
 import { getBackend } from '../../lib/backend'
 import { useAdminOrders, useNow, useSettings } from '../../lib/hooks'
 import { isAudioUnlocked, playAdminChime } from '../../lib/audio'
@@ -168,6 +168,7 @@ export function AdminBoard() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [highlight, setHighlight] = useState<Set<string>>(new Set())
   const [cancelTarget, setCancelTarget] = useState<Order | null>(null)
+  const [recentOpen, setRecentOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const seen = useRef<Set<string> | null>(null)
 
@@ -321,32 +322,54 @@ export function AdminBoard() {
 
       {recent.length > 0 ? (
         <section className="mt-6">
-          <h2 className="mb-2 text-sm font-semibold text-ink-muted">{t('admin.recent')}</h2>
-          <ul className="divide-y divide-hairline overflow-hidden rounded-[var(--radius-md)] border border-hairline bg-panel">
-            {recent.map((order) => (
-              <li key={order.id} className="flex items-center gap-3 px-3 py-2">
-                <span className="tnum font-display text-base font-semibold text-ink-muted">
-                  {order.display_number}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-sm text-ink-muted">
-                  {order.customer_name} · {order.items.map((i) => i.name_en).join(', ')}
-                </span>
-                <span className="text-xs text-ink-muted">{t(`status.${order.status}`)}</span>
-                {order.status === 'collected' ? (
-                  <button
-                    type="button"
-                    onClick={() => void changeStatus(order, 'ready', 'ready')}
-                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-brand-700 hover:bg-brand-700/10"
-                  >
-                    <Undo2 className="size-3.5" aria-hidden="true" />
-                    {t('admin.undo')}
-                  </button>
-                ) : (
-                  <Clock className="size-3.5 text-ink-muted" aria-hidden="true" />
-                )}
-              </li>
-            ))}
-          </ul>
+          {/* Closed by default: after a busy hour the pile of collected orders
+              buries the board, and the count on the toggle keeps it honest. */}
+          <button
+            type="button"
+            onClick={() => setRecentOpen((open) => !open)}
+            aria-expanded={recentOpen}
+            className="mb-2 flex items-center gap-2 rounded-full px-1 py-1 text-sm font-semibold text-ink-muted hover:text-ink"
+          >
+            {recentOpen ? (
+              <ChevronDown className="size-4" aria-hidden="true" />
+            ) : (
+              <ChevronRight className="size-4" aria-hidden="true" />
+            )}
+            {t('admin.recent')}
+            <span className="tnum rounded-full bg-ink/8 px-2 py-0.5 text-xs font-semibold text-ink">
+              {recent.length}
+            </span>
+          </button>
+          {recentOpen ? (
+            <ul className="divide-y divide-hairline overflow-hidden rounded-[var(--radius-md)] border border-hairline bg-panel">
+              {recent.slice(0, 10).map((order) => (
+                <li key={order.id} className="flex items-center gap-3 px-3 py-2">
+                  <span className="tnum font-display text-base font-semibold text-ink-muted">
+                    {order.display_number}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-ink-muted">
+                    {order.customer_name} · {order.items.map((i) => i.name_en).join(', ')}
+                  </span>
+                  <span className="text-xs text-ink-muted">{t(`status.${order.status}`)}</span>
+                  {order.status === 'collected' ? (
+                    <button
+                      type="button"
+                      onClick={() => void changeStatus(order, 'ready', 'ready')}
+                      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-brand-700 hover:bg-brand-700/10"
+                    >
+                      <Undo2 className="size-3.5" aria-hidden="true" />
+                      {t('admin.undo')}
+                    </button>
+                  ) : (
+                    <Clock className="size-3.5 text-ink-muted" aria-hidden="true" />
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {recentOpen && recent.length > 10 ? (
+            <p className="mt-1.5 text-xs text-ink-muted">{t('admin.recentTruncated', { count: recent.length })}</p>
+          ) : null}
         </section>
       ) : null}
 

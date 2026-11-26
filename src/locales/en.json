@@ -132,6 +132,7 @@
     "emptyColumn": "Nothing here",
     "emptyBoard": "No orders yet. Enjoy the quiet.",
     "recent": "Recent",
+    "recentTruncated": "Showing the last 10 of {{count}}. Earlier ones are still counted in Numbers.",
     "undo": "Undo",
     "undoDone": "Moved back",
     "statusChanged": "{{number}} → {{status}}",
@@ -314,8 +315,8 @@
     "footer": "Free for all guests",
     "size": "Print size",
     "print": "Print",
-    "downloadPng": "Download PNG",
-    "downloadSvg": "Download SVG",
+    "downloadCard": "Download card",
+    "downloadQr": "QR only",
     "preview": "Preview",
     "urlMissing": "Set VITE_PUBLIC_APP_URL so the QR points at your real address.",
     "currentUrl": "This QR points to {{url}}"
