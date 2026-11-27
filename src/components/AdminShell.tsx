@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   BarChart3,
   BellRing,
@@ -74,6 +74,7 @@ function cupsIn(orders: { items: { qty: number }[]; status: string; placed_at: s
 export function AdminShell() {
   const { t } = useTranslation()
   const location = useLocation()
+  const navigate = useNavigate()
   const orders = useAdminOrders()
   const settings = useSettings()
   const now = useNow(5000)
@@ -185,7 +186,10 @@ export function AdminShell() {
               void (async () => {
                 const backend = await getBackend()
                 await backend.signOutAdmin()
-                window.location.assign('/admin/login')
+                // Through the router, so the /ScanLu/ base is respected. A raw
+                // location.assign('/admin/login') goes to the domain root and
+                // lands the host on the guest menu.
+                navigate('/admin/login', { replace: true })
               })()
             }}
             aria-label={t('admin.signOut')}

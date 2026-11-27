@@ -182,6 +182,19 @@ try {
     )
     check(overflow <= 1, `${path} has no horizontal overflow (${overflow}px)`)
   }
+
+  /* ------------------------------------- 5. signing out lands on the login screen */
+  // Last, because it ends the admin session this script built up. The raw
+  // location.assign that used to do this ignored the /ScanLu/ base and dropped
+  // the host on the guest menu.
+  await page.setViewportSize({ width: 1180, height: 820 })
+  await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await page.waitForURL('**/admin/login', { timeout: 10000 })
+  // The URL changes before React commits the new screen, so wait for the form.
+  const signInButton = page.getByRole('button', { name: 'Sign in' })
+  await signInButton.waitFor({ timeout: 10000 })
+  check(await signInButton.isVisible(), 'signing out returns to the login screen')
 } catch (error) {
   problems.push(`flow failed: ${error.message}`)
   await page.screenshot({ path: `${OUT}/98-features-failure.png` }).catch(() => {})
