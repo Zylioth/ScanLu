@@ -105,7 +105,14 @@ try {
     await page.setViewportSize({ width: 1180, height: 820 })
     await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' })
     await page.waitForURL('**/admin/login')
-    await page.getByLabel('Passcode').fill(ADMIN_SECRET)
+    // Demo mode asks for a passcode. A live install asks for an email and a
+    // password, so the address is supplied from the environment rather than a
+    // file. SMOKE_ADMIN_PASSWORD is the account's real password there.
+    const emailField = page.getByLabel('Email')
+    if (await emailField.count()) {
+      await emailField.fill(process.env.SMOKE_ADMIN_EMAIL ?? '')
+    }
+    await page.getByLabel(/Passcode|Password/).fill(ADMIN_SECRET)
     await page.getByRole('button', { name: 'Sign in' }).click()
     await page.waitForURL('**/admin', { timeout: 10000 })
     await page.getByRole('heading', { name: 'Order board' }).waitFor()

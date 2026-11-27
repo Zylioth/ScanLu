@@ -706,8 +706,8 @@ export const localBackend: Backend = {
     }
   },
 
-  async signInAdmin(secret) {
-    const ok = secret.trim() === DEMO_PASSCODE
+  async signInAdmin(_email, password) {
+    const ok = password.trim() === DEMO_PASSCODE
     if (ok) localStorage.setItem(ADMIN_KEY, 'true')
     return ok
   },

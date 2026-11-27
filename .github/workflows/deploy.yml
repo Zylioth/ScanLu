@@ -50,7 +50,6 @@ jobs:
           VITE_PUBLIC_APP_URL: https://zylioth.github.io/ScanLu
           VITE_SUPABASE_URL: https://qbafknjgqcdhheziregq.supabase.co
           VITE_SUPABASE_ANON_KEY: sb_publishable_3slrqglCmJMMjcFqnirQKA_6j9xgie4
-          VITE_ADMIN_EMAIL: amirsabrin8@gmail.com
 
       - uses: actions/upload-pages-artifact@v3
         with:

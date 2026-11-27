@@ -588,12 +588,18 @@ export const supabaseBackend: Backend = {
     }
   },
 
-  async signInAdmin(secret) {
-    // In Supabase the secret is the admin's password, paired with their email.
-    const email = import.meta.env.VITE_ADMIN_EMAIL as string | undefined
-    if (!email) return false
-    const { error } = await sb().auth.signInWithPassword({ email, password: secret })
-    return !error
+  async signInAdmin(email, password) {
+    // The address is typed, not baked in, so the bundle names no account and
+    // anyone the host added to public.admins can sign in on this device.
+    const address = email.trim()
+    if (!address) return false
+    const { error } = await sb().auth.signInWithPassword({ email: address, password })
+    if (!error) return true
+    // Wrong credentials arrive as a 4xx. Anything else (offline, auth server
+    // down) is a real failure and should not be reported as a bad password.
+    const status = (error as { status?: number }).status ?? 0
+    if (status >= 400 && status < 500) return false
+    throw new OrderError('NETWORK', error.message)
   },
 
   async signOutAdmin() {

@@ -93,7 +93,7 @@ iPad see the same orders. What is already set up in the project:
    on conflict do nothing;
    ```
 
-4. `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` and `VITE_ADMIN_EMAIL` sit in
+4. `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` sit in
    `.github/workflows/deploy.yml` for the Pages build, and in `.env.local` for
    local development. They are public on purpose: every `VITE_*` value is baked
    into the JavaScript guests download. The RLS policies are what protect the
@@ -107,10 +107,19 @@ The app switches to Supabase whenever `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_ANON_KEY` are both present, and falls back to the browser demo
 otherwise. No component changes.
 
-Admin sign-in is `VITE_ADMIN_EMAIL` plus that account's password. The demo
-passcode only exists in demo mode. The publishable key is public by design and
-ships inside the bundle; the RLS policies in the migration are what protect the
-data. Never put the `service_role` key in a `VITE_*` variable.
+Admin sign-in is an email and a password, typed on the device. No account address
+ships in the bundle, so the admin screen names nobody. The address is remembered
+on that device after the first successful sign-in, so a shift change only needs
+the password.
+
+Anyone in the `admins` table can sign in. To add a second host, create their
+account under Authentication, Users, Add user, then run the same insert as step 3
+with their address. Signing in with an account that is not on the list is
+refused with a message; it does not grant access.
+
+The demo passcode only exists in demo mode. The publishable key is public by
+design and ships inside the bundle; the RLS policies in the migration are what
+protect the data. Never put the `service_role` key in a `VITE_*` variable.
 
 To put your own name on the menu header and the printed QR card:
 

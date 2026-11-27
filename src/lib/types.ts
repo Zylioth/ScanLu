@@ -294,7 +294,8 @@ export interface Backend {
   saveModifierOption(option: ModifierOptionInput): Promise<void>
   deleteModifierOption(id: string): Promise<void>
   subscribe(listener: () => void): () => void
-  signInAdmin(secret: string): Promise<boolean>
+  /** Demo mode takes the passcode as the password and ignores the email. */
+  signInAdmin(email: string, password: string): Promise<boolean>
   signOutAdmin(): Promise<void>
   isAdmin(): Promise<boolean>
 }
