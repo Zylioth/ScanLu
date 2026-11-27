@@ -172,7 +172,8 @@
     "settings": "Settings",
     "modifiers": "Options",
     "ingredients": "Ingredients",
-    "stats": "Numbers",
+    "stats": "Insights",
+    "newOrder": "New order",
     "noAccess": "Sign in to continue"
   },
   "settingsPanel": {
@@ -291,8 +292,11 @@
     "unitPcs": "pieces"
   },
   "stats": {
-    "hint": "Only real orders are counted. Today means today in Brunei time.",
+    "hint": "Days follow Brunei time. Cancelled orders are left out.",
     "empty": "No orders yet today. These numbers appear after the first one.",
+    "emptyDay": "No orders on this day.",
+    "pickDay": "Pick a day",
+    "dayToday": "Today",
     "orders": "Orders",
     "cups": "Drinks",
     "taken": "Taken",
@@ -307,6 +311,29 @@
     "eventOrders_other": "{{count}} orders",
     "eventCups_one": "{{count}} drink",
     "eventCups_other": "{{count}} drinks"
+  },
+  "manual": {
+    "title": "New order",
+    "hint": "For walk-ins and anyone who cannot scan. Stock is still checked, so the last cup cannot be oversold.",
+    "tray": "On this order",
+    "drink": "Drink",
+    "loading": "Loading the menu...",
+    "noMenu": "No drinks on the menu yet.",
+    "cupCount_one": "{{count}} drink",
+    "cupCount_other": "{{count}} drinks",
+    "cupLimit": "Only {{count}} drinks per order. Place a second order for the rest.",
+    "review": "Review",
+    "reviewTitle": "Place this order",
+    "name": "Name",
+    "nameHint": "Leave empty for a walk-in.",
+    "payment": "Payment",
+    "freeModeNote": "Free mode is on, so this order is recorded as free.",
+    "place": "Place order",
+    "placing": "Placing...",
+    "done": "Order placed",
+    "doneBody": "It is on the board now. The guest can pay at the counter.",
+    "another": "Take another order",
+    "openBoard": "Open the board"
   },
   "menuAdmin": {
     "title": "Menu",

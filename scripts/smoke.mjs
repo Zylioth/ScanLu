@@ -153,8 +153,10 @@ try {
     await page.goto(`${BASE}/admin/qr`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(1200)
     await page.screenshot({ path: `${OUT}/10-qr.png` })
-    const qrImg = await page.locator('img[alt*="Scan to order"]').count()
-    if (qrImg === 0) problems.push('QR image did not render')
+    // The page shows one drawn card, so the preview is what has to be a PNG.
+    const preview = page.locator('img[alt="Preview"]')
+    const previewSrc = (await preview.count()) ? await preview.first().getAttribute('src') : ''
+    if (!previewSrc?.startsWith('data:image/png')) problems.push('QR card preview did not render')
     log('qr page rendered')
 
     /* ----------------------------------------------------------- menu admin */

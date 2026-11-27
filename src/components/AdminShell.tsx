@@ -6,6 +6,7 @@ import {
   BellRing,
   BellOff,
   BookOpen,
+  ClipboardPlus,
   ExternalLink,
   LayoutGrid,
   LogOut,
@@ -25,6 +26,7 @@ import { Chip, Skeleton, cx } from '../components/ui'
 
 const NAV = [
   { to: '/admin', labelKey: 'admin.board', Icon: LayoutGrid },
+  { to: '/admin/new-order', labelKey: 'admin.newOrder', Icon: ClipboardPlus },
   { to: '/admin/stats', labelKey: 'admin.stats', Icon: BarChart3 },
   { to: '/admin/menu', labelKey: 'admin.menu', Icon: BookOpen },
   { to: '/admin/modifiers', labelKey: 'admin.modifiers', Icon: SlidersHorizontal },
@@ -103,6 +105,7 @@ export function AdminShell() {
     ['/admin/modifiers', 'admin.modifiers'],
     ['/admin/ingredients', 'admin.ingredients'],
     ['/admin/settings', 'admin.settings'],
+    ['/admin/new-order', 'admin.newOrder'],
     ['/admin/stats', 'admin.stats'],
     ['/admin/menu', 'admin.menu'],
     ['/admin/qr', 'admin.qr'],

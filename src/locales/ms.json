@@ -172,7 +172,8 @@
     "settings": "Tetapan",
     "modifiers": "Pilihan",
     "ingredients": "Bahan",
-    "stats": "Angka",
+    "stats": "Statistik",
+    "newOrder": "Pesanan baru",
     "noAccess": "Masuk untuk teruskan"
   },
   "settingsPanel": {
@@ -291,8 +292,11 @@
     "unitPcs": "biji"
   },
   "stats": {
-    "hint": "Hanya pesanan sebenar dikira. Hari ini bermaksud hari ini waktu Brunei.",
+    "hint": "Hari ikut waktu Brunei. Pesanan yang dibatalkan tidak dikira.",
     "empty": "Belum ada pesanan hari ini. Nombor akan muncul selepas yang pertama.",
+    "emptyDay": "Tiada pesanan pada hari tersebut.",
+    "pickDay": "Pilih hari",
+    "dayToday": "Hari ini",
     "orders": "Pesanan",
     "cups": "Minuman",
     "taken": "Diterima",
@@ -307,6 +311,29 @@
     "eventOrders_other": "{{count}} pesanan",
     "eventCups_one": "{{count}} minuman",
     "eventCups_other": "{{count}} minuman"
+  },
+  "manual": {
+    "title": "Pesanan baru",
+    "hint": "Untuk pelanggan walk-in dan sesiapa yang tidak dapat mengimbas. Stok masih disemak, jadi cawan terakhir tidak boleh terlebih jual.",
+    "tray": "Dalam pesanan ini",
+    "drink": "Minuman",
+    "loading": "Memuatkan menu...",
+    "noMenu": "Belum ada minuman dalam menu.",
+    "cupCount_one": "{{count}} minuman",
+    "cupCount_other": "{{count}} minuman",
+    "cupLimit": "Hanya {{count}} minuman setiap pesanan. Buat pesanan kedua untuk selebihnya.",
+    "review": "Semak",
+    "reviewTitle": "Hantar pesanan ini",
+    "name": "Nama",
+    "nameHint": "Biarkan kosong untuk walk-in.",
+    "payment": "Bayaran",
+    "freeModeNote": "Mod percuma aktif, jadi pesanan ini direkod sebagai percuma.",
+    "place": "Buat pesanan",
+    "placing": "Menghantar pesanan",
+    "done": "Pesanan diterima",
+    "doneBody": "Ia sudah ada di papan. Pelanggan boleh bayar di kaunter.",
+    "another": "Ambil pesanan lain",
+    "openBoard": "Buka papan"
   },
   "menuAdmin": {
     "title": "Menu",

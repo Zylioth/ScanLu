@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAdminOrders, useSettings } from '../../lib/hooks'
 import { dayKey, formatMoney } from '../../lib/format'
-import { Skeleton } from '../../components/ui'
+import { Skeleton, cx } from '../../components/ui'
 import type { Order } from '../../lib/types'
 
 const TZ = 'Asia/Brunei'
@@ -13,6 +14,15 @@ function hourInBrunei(iso: string): number {
     hour12: false,
   }).format(new Date(iso))
   return Number(label) % 24
+}
+
+/** "21 Nov". Anchored at noon UTC so the Brunei calendar day can never slip. */
+function shortDay(key: string): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: TZ,
+    day: 'numeric',
+    month: 'short',
+  }).format(new Date(`${key}T12:00:00Z`))
 }
 
 interface Stats {
@@ -79,6 +89,9 @@ export function AdminStats() {
   const orders = useAdminOrders()
   const settings = useSettings()
 
+  const today = dayKey()
+  const [pickedDay, setPickedDay] = useState(today)
+
   if (orders.loading && !orders.data) {
     return (
       <div className="mx-auto max-w-2xl space-y-3 p-4">
@@ -88,37 +101,70 @@ export function AdminStats() {
     )
   }
 
-  const today = dayKey()
-  const todaysOrders = (orders.data ?? []).filter((order) => dayKey(new Date(order.placed_at)) === today)
-  const todayStats = summarise(todaysOrders)
-  const eventStats = summarise(orders.data ?? [])
+  const all = orders.data ?? []
+  // Today always offers itself, and so does whatever is selected, so the row can
+  // never lose the day whose numbers are on screen.
+  const days = [...new Set([...all.map((order) => dayKey(new Date(order.placed_at))), today, pickedDay])]
+    .sort((a, b) => (a < b ? 1 : a > b ? -1 : 0))
+
+  const dayOrders = all.filter((order) => dayKey(new Date(order.placed_at)) === pickedDay)
+  const dayStats = summarise(dayOrders)
+  const eventStats = summarise(all)
   const freeMode = settings.data?.free_mode ?? false
-  const topCups = todayStats.byDrink[0]?.cups ?? 0
-  const busiest = Math.max(1, ...todayStats.byHour.map((hour) => hour.cups))
+  const topCups = dayStats.byDrink[0]?.cups ?? 0
+  const busiest = Math.max(1, ...dayStats.byHour.map((hour) => hour.cups))
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-4 pb-16">
-      <p className="text-sm text-ink-muted">{t('stats.hint')}</p>
+      <div className="space-y-2.5">
+        <div
+          role="group"
+          aria-label={t('stats.pickDay')}
+          className="scrollbar-none flex gap-2 overflow-x-auto pb-1"
+        >
+          {days.map((day) => {
+            const active = day === pickedDay
+            return (
+              <button
+                key={day}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setPickedDay(day)}
+                className={cx(
+                  // 44px tall: the same thumb-sized target as the guest menu chips.
+                  'min-h-11 shrink-0 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-colors',
+                  active
+                    ? 'bg-brand-700 text-cream-50'
+                    : 'bg-panel text-ink-muted ring-1 ring-hairline hover:text-ink',
+                )}
+              >
+                {day === today ? t('stats.dayToday') : shortDay(day)}
+              </button>
+            )
+          })}
+        </div>
+        <p className="text-sm text-ink-muted">{t('stats.hint')}</p>
+      </div>
 
-      {todayStats.orders === 0 ? (
+      {dayOrders.length === 0 ? (
         <p className="rounded-[var(--radius-md)] border border-dashed border-hairline px-4 py-10 text-center text-sm text-ink-muted">
-          {t('stats.empty')}
+          {pickedDay === today ? t('stats.empty') : t('stats.emptyDay')}
         </p>
       ) : (
         <>
-          {/* ------------------------------------------------------- numbers */}
+          {/* ------------------------------------------------------- figures */}
           <section className="flex flex-wrap gap-x-8 gap-y-4">
-            <Figure label={t('stats.orders')} value={String(todayStats.orders)} />
-            <Figure label={t('stats.cups')} value={String(todayStats.cups)} />
-            {freeMode ? null : <Figure label={t('stats.taken')} value={formatMoney(todayStats.revenue)} />}
-            <Figure label={t('stats.cancelled')} value={String(todayStats.cancelled)} />
+            <Figure label={t('stats.orders')} value={String(dayStats.orders)} />
+            <Figure label={t('stats.cups')} value={String(dayStats.cups)} />
+            {freeMode ? null : <Figure label={t('stats.taken')} value={formatMoney(dayStats.revenue)} />}
+            <Figure label={t('stats.cancelled')} value={String(dayStats.cancelled)} />
           </section>
 
           {/* --------------------------------------------------------- drinks */}
           <section>
             <h2 className="text-sm font-semibold text-ink">{t('stats.topDrinks')}</h2>
             <ul className="mt-2 space-y-2">
-              {todayStats.byDrink.map((drink) => (
+              {dayStats.byDrink.map((drink) => (
                 <li key={drink.name}>
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="min-w-0 truncate text-sm text-ink">{drink.name}</span>
@@ -141,8 +187,10 @@ export function AdminStats() {
           <section>
             <h2 className="text-sm font-semibold text-ink">{t('stats.byHour')}</h2>
             <div className="mt-2 flex items-end gap-1" aria-hidden="true">
-              {todayStats.byHour.map((hour) => (
-                <div key={hour.hour} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+              {dayStats.byHour.map((hour) => (
+                // Capped width, because a quiet day has one or two hours and a
+                // full-width slab reads as a chart with no shape.
+                <div key={hour.hour} className="flex min-w-0 max-w-14 flex-1 flex-col items-center gap-1">
                   <span className="tnum text-[0.65rem] text-ink-muted">{hour.cups}</span>
                   <div
                     className="w-full rounded-t-[3px] bg-brand-500/80"
@@ -157,7 +205,7 @@ export function AdminStats() {
         </>
       )}
 
-      {/* The whole event, not only today. Different question, so it is separate. */}
+      {/* The whole event, not only the picked day. Different question, so it is separate. */}
       <section className="border-t border-hairline pt-4">
         <h2 className="text-sm font-semibold text-ink">{t('stats.eventTitle')}</h2>
         <p className="tnum mt-1 text-sm text-ink-muted">
