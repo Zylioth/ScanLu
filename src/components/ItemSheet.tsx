@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { MenuItemView, ModifierGroup } from '../lib/types'
 import { formatMoney } from '../lib/format'
@@ -58,16 +58,26 @@ export function ItemSheet({
   const [qty, setQty] = useState(1)
   const [touched, setTouched] = useState(false)
 
+  // The menu refetches every few seconds, which hands us a new groups array each
+  // time even when nothing changed. Seeding state from that array would wipe the
+  // guest's choices mid-tap, so it is read through a ref that keeps itself fresh,
+  // and the reset is keyed on the sheet opening for a drink instead.
+  const itemId = item?.id ?? null
+  const groupsRef = useRef(relevantGroups)
   useEffect(() => {
-    if (!open || !item) return
+    groupsRef.current = relevantGroups
+  }, [relevantGroups])
+
+  useEffect(() => {
+    if (!open || !itemId) return
     const initial: Record<string, string[]> = {}
-    for (const group of relevantGroups) {
+    for (const group of groupsRef.current) {
       initial[group.id] = group.min_select > 0 ? [group.options[0].id] : []
     }
     setSelected(initial)
     setQty(1)
     setTouched(false)
-  }, [open, item, relevantGroups])
+  }, [open, itemId])
 
   if (!item) return null
 
