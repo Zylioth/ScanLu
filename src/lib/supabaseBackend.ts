@@ -107,12 +107,24 @@ function rpcError(error: { message: string } | null): never {
   throw new OrderError('NETWORK', raw)
 }
 
+// Every query on the guest screen asks for the session at the same moment, so
+// without this one page load signed in three separate anonymous users. Supabase
+// counts each of those as a user, and the store picked up two extra ones per
+// visit. One in flight promise, shared by every caller.
+let guestSignIn: Promise<void> | null = null
+
 async function ensureGuestSession() {
   const c = sb()
   const { data } = await c.auth.getSession()
   if (data.session) return
-  const { error } = await c.auth.signInAnonymously()
-  if (error) throw new OrderError('NETWORK', error.message)
+  guestSignIn ??= (async () => {
+    const { data: created, error } = await c.auth.signInAnonymously()
+    if (error) throw new OrderError('NETWORK', error.message)
+    if (!created.session) throw new OrderError('NETWORK', 'Anonymous sign-in is off')
+  })().finally(() => {
+    guestSignIn = null
+  })
+  await guestSignIn
 }
 
 function mapOrder(row: Record<string, unknown>): Order {
@@ -173,6 +185,9 @@ function publicImageUrl(
 function menuItemRow(row: Record<string, unknown>): MenuItemView {
   return {
     ...(row as unknown as MenuItemView),
+    // The guest menu asks for columns without the recipe, so keep the shape the
+    // type promises rather than leaving the key undefined.
+    recipe: (row.recipe as MenuItemView['recipe'] | undefined) ?? [],
     image_url: publicImageUrl(
       (row.image_path as string | null | undefined) ?? null,
       (row.image_updated_at as string | null | undefined) ?? null,
@@ -188,8 +203,15 @@ export const supabaseBackend: Backend = {
     const c = sb()
     const [cats, items, groups, options, availability] = await Promise.all([
       c.from('categories').select('*').eq('is_active', true).order('sort_order'),
-      // menu_items_full adds the recipe jsonb array the UI expects.
-      c.from('menu_items_full').select('*').eq('is_active', true).order('sort_order'),
+      // Explicit columns on purpose. The guest never uses the recipe lines, and
+      // asking for them shipped every ingredient id and quantity to every phone
+      // for nothing. A new guest-visible column has to be listed here, and the
+      // list stays a single literal because the client types its own select.
+      c
+        .from('menu_items_full')
+        .select('id,category_id,name_en,name_ms,description_en,description_ms,price,image_path,image_updated_at,is_active,is_sold_out_manual,sort_order,hourly_cap,prep_seconds,modifier_group_ids,created_at')
+        .eq('is_active', true)
+        .order('sort_order'),
       c.from('modifier_groups').select('*').order('created_at'),
       c.from('modifier_options').select('*').order('created_at'),
       c.from('menu_availability').select('*'),
